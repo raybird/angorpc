@@ -375,3 +375,14 @@ export declare const GetCategoriesOutputSchema: z.ZodArray<z.ZodObject<{
     name: z.ZodString;
     slug: z.ZodString;
 }, z.core.$strip>>;
+export declare const UpdateOrderStatusInputSchema: z.ZodObject<{
+    id: z.ZodString;
+    status: z.ZodEnum<{
+        PENDING: "PENDING";
+        PAID: "PAID";
+        SHIPPED: "SHIPPED";
+        DELIVERED: "DELIVERED";
+        CANCELLED: "CANCELLED";
+        REFUNDED: "REFUNDED";
+    }>;
+}, z.core.$strip>;

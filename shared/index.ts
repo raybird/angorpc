@@ -335,4 +335,10 @@ export const GetCategoriesOutputSchema = z.array(z.object({
   slug: z.string(),
 }));
 
+// 更新訂單狀態輸入 Schema
+export const UpdateOrderStatusInputSchema = z.object({
+  id: z.string().uuid("不合法的訂單 ID 格式"),
+  status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+});
+
 

@@ -24,13 +24,10 @@
         }
       </a>
       
-      <a href="javascript:void(0)" class="menu-item disabled" title="即將推出">
+      <a routerLink="orders" routerLinkActive="active" class="menu-item">
         <span class="menu-icon">📜</span>
         @if (!isSidebarCollapsed()) {
           <span class="menu-label">訂單管理</span>
-        }
-        @if (!isSidebarCollapsed()) {
-          <span class="badge">Soon</span>
         }
       </a>
 

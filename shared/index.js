@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GetCategoriesOutputSchema = exports.OrderDetailOutputSchema = exports.GetOrdersOutputSchema = exports.GetOrdersInputSchema = exports.UpdateCouponInputSchema = exports.CreateCouponInputSchema = exports.GetCouponsOutputSchema = exports.GetCouponsInputSchema = exports.ValidateCouponOutputSchema = exports.ValidateCouponInputSchema = exports.CouponSchema = exports.CreateOrderOutputSchema = exports.CreateOrderInputSchema = exports.AddressSchema = exports.GetCartOutputSchema = exports.RemoveCartItemInputSchema = exports.UpdateCartItemInputSchema = exports.AddCartItemInputSchema = exports.CartItemSchema = exports.UpdateProductInputSchema = exports.CreateProductInputSchema = exports.ProductDetailOutputSchema = exports.GetProductsOutputSchema = exports.GetProductsInputSchema = exports.ProductSchema = exports.ProfileOutputSchema = exports.RegisterOutputSchema = exports.RegisterInputSchema = exports.LoginOutputSchema = exports.LoginInputSchema = exports.HelloOutputSchema = exports.HelloInputSchema = void 0;
+exports.UpdateOrderStatusInputSchema = exports.GetCategoriesOutputSchema = exports.OrderDetailOutputSchema = exports.GetOrdersOutputSchema = exports.GetOrdersInputSchema = exports.UpdateCouponInputSchema = exports.CreateCouponInputSchema = exports.GetCouponsOutputSchema = exports.GetCouponsInputSchema = exports.ValidateCouponOutputSchema = exports.ValidateCouponInputSchema = exports.CouponSchema = exports.CreateOrderOutputSchema = exports.CreateOrderInputSchema = exports.AddressSchema = exports.GetCartOutputSchema = exports.RemoveCartItemInputSchema = exports.UpdateCartItemInputSchema = exports.AddCartItemInputSchema = exports.CartItemSchema = exports.UpdateProductInputSchema = exports.CreateProductInputSchema = exports.ProductDetailOutputSchema = exports.GetProductsOutputSchema = exports.GetProductsInputSchema = exports.ProductSchema = exports.ProfileOutputSchema = exports.RegisterOutputSchema = exports.RegisterInputSchema = exports.LoginOutputSchema = exports.LoginInputSchema = exports.HelloOutputSchema = exports.HelloInputSchema = void 0;
 const zod_1 = require("zod");
 // Hello World 驗證 Schema
 exports.HelloInputSchema = zod_1.z.object({
@@ -305,3 +305,8 @@ exports.GetCategoriesOutputSchema = zod_1.z.array(zod_1.z.object({
     name: zod_1.z.string(),
     slug: zod_1.z.string(),
 }));
+// 更新訂單狀態輸入 Schema
+exports.UpdateOrderStatusInputSchema = zod_1.z.object({
+    id: zod_1.z.string().uuid("不合法的訂單 ID 格式"),
+    status: zod_1.z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+});

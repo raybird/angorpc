@@ -1,0 +1,217 @@
+<div class="orders-container">
+  <!-- 頁面標題 -->
+  <div class="page-header">
+    <div class="title-section">
+      <h1>平台訂單管理</h1>
+      <p>監控所有消費者訂單狀態、查詢明細、修改發貨狀態或處理退款事宜。</p>
+    </div>
+  </div>
+
+  <!-- 狀態篩選列 -->
+  <div class="filters-card">
+    <div class="filter-actions">
+      <label for="statusFilter" class="filter-label">依訂單狀態篩選：</label>
+      <div class="select-wrapper">
+        <select id="statusFilter" [value]="selectedStatus()" (change)="onStatusFilterChange($event)">
+          <option value="ALL">全部訂單狀態</option>
+          <option value="PENDING">待付款 (Pending)</option>
+          <option value="PAID">已付款 (Paid)</option>
+          <option value="SHIPPED">已出貨 (Shipped)</option>
+          <option value="DELIVERED">已送達 (Delivered)</option>
+          <option value="CANCELLED">已取消 (Cancelled)</option>
+          <option value="REFUNDED">已退款 (Refunded)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 數據載入狀態 -->
+  <div class="loading-state" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>正在同步訂單數據，請稍後...</p>
+  </div>
+
+  <!-- 空狀態 -->
+  <div class="empty-state" *ngIf="!isLoading() && orders().length === 0">
+    <div class="empty-icon">📜</div>
+    <h3>尚無此類型的訂單</h3>
+    <p>目前沒有符合所選狀態的消費者訂單資料。</p>
+  </div>
+
+  <!-- 訂單資料表 -->
+  <div class="table-container" *ngIf="!isLoading() && orders().length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>訂單編號</th>
+          <th>下單時間</th>
+          <th>會員識別 ID</th>
+          <th>訂單總金額</th>
+          <th>目前狀態</th>
+          <th class="text-right">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders()">
+          <td class="id-cell">
+            <span class="order-id" (click)="viewOrderDetail(order)">{{ order.id }}</span>
+          </td>
+          <td>
+            <span class="order-date">{{ order.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
+          </td>
+          <td class="user-cell">
+            <span class="user-id" title="{{ order.userId }}">{{ order.userId | slice:0:8 }}...</span>
+          </td>
+          <td class="amount-cell">
+            ${{ order.totalAmount | number:'1.2-2' }}
+          </td>
+          <td>
+            <span class="status-badge {{ getStatusLabel(order.status).class }}">
+              {{ getStatusLabel(order.status).label }}
+            </span>
+          </td>
+          <td class="actions-cell text-right">
+            <button class="btn-icon" (click)="viewOrderDetail(order)" title="查看明細與操作">
+              🔍 檢視詳情
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 分頁導航 -->
+    <div class="pagination">
+      <span class="page-info">
+        第 <strong>{{ page() }}</strong> 頁，共 {{ totalPages() }} 頁
+      </span>
+      <div class="pagination-buttons">
+        <button [disabled]="page() === 1" (click)="changePage(-1)" class="btn-page">◀ 上一頁</button>
+        <button [disabled]="page() === totalPages()" (click)="changePage(1)" class="btn-page">下一頁 ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 訂單詳情 Modal -->
+<div class="modal-overlay" *ngIf="isModalOpen()" (click)="closeModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>訂單詳細資料</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <!-- 載入詳情中 -->
+    <div class="modal-loading" *ngIf="isLoadingDetail()">
+      <div class="spinner"></div>
+      <p>正在加載詳細明細，請稍後...</p>
+    </div>
+
+    <!-- 載入失敗錯誤 -->
+    <div class="error-banner" *ngIf="!isLoadingDetail() && errorMessage()">
+      ⚠️ {{ errorMessage() }}
+    </div>
+
+    <!-- 訂單內容（雙欄排版） -->
+    <div class="modal-body" *ngIf="!isLoadingDetail() && selectedOrder()">
+      <div class="detail-grid">
+        
+        <!-- 左側：購買商品清單 -->
+        <div class="items-section">
+          <h3>📦 購買商品明細</h3>
+          <div class="items-table-wrapper">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>商品名稱</th>
+                  <th class="text-right">單價</th>
+                  <th class="text-center">數量</th>
+                  <th class="text-right">小計</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of selectedOrder().orderItems">
+                  <td class="item-name">{{ item.name }}</td>
+                  <td class="text-right">${{ item.price | number:'1.2-2' }}</td>
+                  <td class="text-center">{{ item.quantity }}</td>
+                  <td class="text-right">${{ (item.price * item.quantity) | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 金額小計明細 -->
+          <div class="amount-summary">
+            <div class="summary-row" *ngIf="selectedOrder().discountAmount > 0">
+              <span>商品小計:</span>
+              <span>${{ (selectedOrder().totalAmount + selectedOrder().discountAmount) | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-row discount" *ngIf="selectedOrder().discountAmount > 0">
+              <span>優惠券折抵 ({{ selectedOrder().couponCode }}):</span>
+              <span>-${{ selectedOrder().discountAmount | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-row final">
+              <span>實付總金額:</span>
+              <span class="final-amount">${{ selectedOrder().totalAmount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右側：配送與狀態更改 -->
+        <div class="info-section">
+          <!-- 狀態更改區 -->
+          <div class="status-change-box">
+            <h3>⚙️ 訂單狀態控制</h3>
+            <div class="form-group">
+              <label for="orderStatus">變更訂單狀態：</label>
+              <div class="select-wrapper select-status">
+                <select id="orderStatus" [value]="selectedOrder().status" (change)="onUpdateStatus($event)" [disabled]="isUpdating()">
+                  <option value="PENDING">待付款 (Pending)</option>
+                  <option value="PAID">已付款 (Paid)</option>
+                  <option value="SHIPPED">已出貨 (Shipped)</option>
+                  <option value="DELIVERED">已送達 (Delivered)</option>
+                  <option value="CANCELLED">已取消 (Cancelled)</option>
+                  <option value="REFUNDED">已退款 (Refunded)</option>
+                </select>
+              </div>
+              <span class="updating-text" *ngIf="isUpdating()">正在更新狀態中...</span>
+            </div>
+          </div>
+
+          <!-- 配送地址資訊 -->
+          <div class="shipping-info">
+            <h3>🚚 配送與收件人資訊</h3>
+            <div class="info-card">
+              <div class="info-field">
+                <span class="info-label">收件人：</span>
+                <span class="info-val">{{ selectedOrder().shippingAddress.recipientName }}</span>
+              </div>
+              <div class="info-field">
+                <span class="info-label">電話：</span>
+                <span class="info-val">{{ selectedOrder().shippingAddress.phone }}</span>
+              </div>
+              <div class="info-field">
+                <span class="info-label">收件地址：</span>
+                <span class="info-val">
+                  <span class="zip" *ngIf="selectedOrder().shippingAddress.postalCode">[{{ selectedOrder().shippingAddress.postalCode }}]</span>
+                  {{ selectedOrder().shippingAddress.address }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 下單者基本資訊 -->
+          <div class="buyer-info">
+            <h3>👤 下單帳戶 ID</h3>
+            <span class="buyer-uuid">{{ selectedOrder().userId }}</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 底部關閉 -->
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">關閉視窗</button>
+    </div>
+  </div>
+</div>

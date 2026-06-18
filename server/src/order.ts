@@ -7,7 +7,8 @@ import {
   CreateOrderOutputSchema,
   GetOrdersInputSchema,
   GetOrdersOutputSchema,
-  OrderDetailOutputSchema
+  OrderDetailOutputSchema,
+  UpdateOrderStatusInputSchema
 } from '../../shared/index.js';
 
 /**
@@ -263,9 +264,70 @@ export const getOrderById = os
     };
   });
 
+export const updateOrderStatus = os
+  .use(authMiddleware)
+  .input(UpdateOrderStatusInputSchema)
+  .output(OrderDetailOutputSchema)
+  .handler(async ({ input, context }: { input: z.infer<typeof UpdateOrderStatusInputSchema>; context: AuthContext }) => {
+    if (!context.user || context.user.role !== 'ADMIN') {
+      throw new Error('FORBIDDEN');
+    }
+
+    const order = await prisma.order.update({
+      where: { id: input.id },
+      data: {
+        status: input.status,
+      },
+      include: {
+        orderItems: {
+          include: {
+            product: true,
+          },
+        },
+        coupon: true,
+      },
+    });
+
+    const shippingAddress = order.shippingAddress as any;
+    const billingAddress = order.billingAddress as any;
+
+    const formattedItems = order.orderItems.map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      name: item.product.name,
+      price: Number(item.price),
+      quantity: item.quantity,
+    }));
+
+    return {
+      id: order.id,
+      userId: order.userId,
+      totalAmount: Number(order.totalAmount),
+      discountAmount: Number(order.discountAmount),
+      couponCode: order.coupon?.code || null,
+      status: order.status,
+      shippingAddress: {
+        recipientName: shippingAddress.recipientName || '',
+        phone: shippingAddress.phone || '',
+        address: shippingAddress.address || '',
+        postalCode: shippingAddress.postalCode,
+      },
+      billingAddress: {
+        recipientName: billingAddress.recipientName || '',
+        phone: billingAddress.phone || '',
+        address: billingAddress.address || '',
+        postalCode: billingAddress.postalCode,
+      },
+      orderItems: formattedItems,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+    };
+  });
+
 export const orderRouter = {
   createOrder,
   getOrders,
   getOrderById,
+  updateOrderStatus,
 };
 export type OrderRouter = typeof orderRouter;

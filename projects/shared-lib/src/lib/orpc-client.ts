@@ -190,6 +190,10 @@ export interface AppRouterClient {
       };
     }>;
     getOrderById: (input: { id: string }) => Promise<OrderDetail>;
+    updateOrderStatus: (input: {
+      id: string;
+      status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+    }) => Promise<OrderDetail>;
   };
   coupon: {
     validateCoupon: (input: {
