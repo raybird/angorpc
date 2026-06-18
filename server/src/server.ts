@@ -40,7 +40,12 @@ app.all('/api/rpc/*', async (req, res) => {
   const webReq = new Request(url, requestInit);
 
   try {
-    const webRes = await fetchHandler({ request: webReq, context: {} });
+    const webRes = await fetchHandler({
+      request: webReq,
+      context: {
+        authorization: req.headers.authorization,
+      }
+    });
     
     res.status(webRes.status);
     webRes.headers.forEach((value, key) => {

@@ -1,0 +1,139 @@
+<div class="register-container">
+  <!-- Neon Background Accents -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <div class="register-card">
+    <header class="card-header">
+      <div class="brand-tag">AngoRPC Account</div>
+      <h2>免費註冊會員</h2>
+      <p>建立您的個人帳戶，開啟安全、快速的電商體驗</p>
+    </header>
+
+    @if (errorMessage()) {
+      <div class="error-banner">
+        <span class="warning-icon">⚠️</span>
+        <span class="error-text">{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+      <!-- Name Field (Grid for First/Last Name) -->
+      <div class="form-row-grid">
+        <!-- Last Name Field -->
+        <div class="form-field">
+          <label for="lastName">姓氏 (Last Name)</label>
+          <div class="input-wrapper">
+            <input
+              id="lastName"
+              type="text"
+              formControlName="lastName"
+              placeholder="陳"
+              [class.input-error]="registerForm.get('lastName')?.touched && registerForm.get('lastName')?.invalid"
+            />
+          </div>
+          @if (registerForm.get('lastName')?.touched && registerForm.get('lastName')?.invalid) {
+            <div class="error-msg">姓氏為必填</div>
+          }
+        </div>
+
+        <!-- First Name Field -->
+        <div class="form-field">
+          <label for="firstName">名字 (First Name)</label>
+          <div class="input-wrapper">
+            <input
+              id="firstName"
+              type="text"
+              formControlName="firstName"
+              placeholder="小明"
+              [class.input-error]="registerForm.get('firstName')?.touched && registerForm.get('firstName')?.invalid"
+            />
+          </div>
+          @if (registerForm.get('firstName')?.touched && registerForm.get('firstName')?.invalid) {
+            <div class="error-msg">名字為必填</div>
+          }
+        </div>
+      </div>
+
+      <!-- Email Field -->
+      <div class="form-field">
+        <label for="email">電子郵件 (Email)</label>
+        <div class="input-wrapper">
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="example@domain.com"
+            [class.input-error]="registerForm.get('email')?.touched && registerForm.get('email')?.invalid"
+          />
+        </div>
+        @if (registerForm.get('email')?.touched && registerForm.get('email')?.invalid) {
+          <div class="error-msg">
+            @if (registerForm.get('email')?.hasError('required')) {
+              <span>電子郵件欄位為必填</span>
+            } @else if (registerForm.get('email')?.hasError('email')) {
+              <span>請輸入正確的電子郵件格式</span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-field">
+        <label for="password">登入密碼 (Password)</label>
+        <div class="input-wrapper">
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            placeholder="請設定密碼 (至少 8 碼)"
+            [class.input-error]="registerForm.get('password')?.touched && registerForm.get('password')?.invalid"
+          />
+        </div>
+        @if (registerForm.get('password')?.touched && registerForm.get('password')?.invalid) {
+          <div class="error-msg">
+            @if (registerForm.get('password')?.hasError('required')) {
+              <span>密碼欄位為必填</span>
+            } @else if (registerForm.get('password')?.hasError('minlength')) {
+              <span>密碼長度至少需 8 個字元</span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Phone Field -->
+      <div class="form-field">
+        <label for="phone">聯絡電話 (Phone - 選填)</label>
+        <div class="input-wrapper">
+          <input
+            id="phone"
+            type="text"
+            formControlName="phone"
+            placeholder="0912345678"
+            [class.input-error]="registerForm.get('phone')?.touched && registerForm.get('phone')?.invalid"
+          />
+        </div>
+        @if (registerForm.get('phone')?.touched && registerForm.get('phone')?.invalid) {
+          <div class="error-msg">不合法的電話號碼格式（支援 8~15 碼純數字）</div>
+        }
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-submit" [disabled]="isLoading()">
+        @if (isLoading()) {
+          <span>註冊驗證中...</span>
+        } @else {
+          <span>確認註冊</span>
+        }
+      </button>
+    </form>
+
+    <!-- Login Redirect -->
+    <footer class="card-footer">
+      <p>已經擁有帳號？ <a routerLink="/login">立即登入</a></p>
+      <div class="home-back">
+        <a routerLink="/">⬅ 返回前台首頁</a>
+      </div>
+    </footer>
+  </div>
+</div>
