@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { CartStateService, AuthStateService } from 'shared-lib';
 
 @Component({
@@ -13,6 +13,7 @@ import { CartStateService, AuthStateService } from 'shared-lib';
 export class CartComponent {
   protected readonly cartState = inject(CartStateService);
   protected readonly authState = inject(AuthStateService);
+  private router = inject(Router);
 
   protected readonly isUpdating = signal<string | null>(null);
 
@@ -47,6 +48,6 @@ export class CartComponent {
   }
 
   onCheckout() {
-    alert('感謝您的測試！結帳系統即將於下一階段上線 🚀');
+    this.router.navigate(['/checkout']);
   }
 }
