@@ -1,9 +1,9 @@
 import { Component, signal, inject, OnInit, computed } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { OrpcClientService, AuthStateService, Product, CartStateService, Category } from 'shared-lib';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -31,11 +31,28 @@ export class App implements OnInit {
   private orpc = inject(OrpcClientService);
   private authState = inject(AuthStateService);
   private cartState = inject(CartStateService);
+  private router = inject(Router);
+
+  // 路由狀態追蹤
+  protected readonly currentUrl = signal<string>('/');
+  protected readonly isHomePage = computed(() => {
+    const url = this.currentUrl().split('?')[0];
+    return url === '/' || url === '/home';
+  });
 
   // Sync member session with storefront landing page
   protected readonly currentUser = this.authState.currentUser;
   protected readonly isAuthenticated = this.authState.isAuthenticated;
   protected readonly cartCount = this.cartState.cartCount;
+
+  constructor() {
+    // 監聽路由結束事件以更新 currentUrl 狀態
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe((event) => {
+      this.currentUrl.set(event.urlAfterRedirects);
+    });
+  }
 
   async ngOnInit() {
     // 訂閱搜尋防抖邏輯

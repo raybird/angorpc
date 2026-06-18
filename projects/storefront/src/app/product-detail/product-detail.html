@@ -1,0 +1,131 @@
+<div class="detail-container">
+  <!-- Neon Background Accents -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <div class="detail-wrapper">
+    <!-- 1. Loading 骨架屏 -->
+    @if (isLoading()) {
+      <div class="skeleton-detail-grid">
+        <div class="skeleton-left"></div>
+        <div class="skeleton-right">
+          <div class="skeleton-line path"></div>
+          <div class="skeleton-line title"></div>
+          <div class="skeleton-line price"></div>
+          <div class="skeleton-line desc-1"></div>
+          <div class="skeleton-line desc-2"></div>
+          <div class="skeleton-line action"></div>
+        </div>
+      </div>
+    }
+
+    <!-- 2. Error 錯誤狀態 -->
+    @if (!isLoading() && errorOccurred()) {
+      <div class="error-card">
+        <div class="icon-wrapper">❌</div>
+        <h2>無法載入商品詳情</h2>
+        <p>找不到該商品，或連線至後端 oRPC 伺服器失敗。請確認商品 slug 是否正確，或伺服器正在運作。</p>
+        <button class="btn-primary" routerLink="/">⬅ 返回前台首頁</button>
+      </div>
+    }
+
+    <!-- 3. 正常商品詳情 -->
+    @if (!isLoading() && !errorOccurred() && product()) {
+      <!-- 麵包屑導航 -->
+      <nav class="breadcrumb">
+        <a routerLink="/">首頁</a>
+        <span class="divider">/</span>
+        <span class="category-name">{{ product().category.name }}</span>
+        <span class="divider">/</span>
+        <span class="active-item">{{ product().name }}</span>
+      </nav>
+
+      <div class="detail-grid">
+        <!-- 左欄：大圖展示區 -->
+        <div class="detail-image-box">
+          <div class="image-gradient-card">
+            <span class="badge-tag">Premium Catalog</span>
+            <div class="product-symbol">✨</div>
+            <div class="product-code">SLUG: {{ product().slug }}</div>
+          </div>
+        </div>
+
+        <!-- 右欄：商品資訊與購買操作 -->
+        <div class="detail-info-box">
+          <div class="category-tag">{{ product().category.name }}</div>
+          <h2 class="product-title">{{ product().name }}</h2>
+          
+          <!-- 價格展示 -->
+          <div class="price-section">
+            <span class="currency">NT$</span>
+            <span class="price-val">{{ product().price | number:'1.0-0' }}</span>
+          </div>
+
+          <!-- 商品描述 -->
+          <div class="desc-section">
+            <h4>商品描述</h4>
+            <p>{{ product().description || '此商品暫無詳細描述說明。' }}</p>
+          </div>
+
+          <!-- 庫存狀態與限制 -->
+          <div class="stock-section">
+            @if (product().stock <= 0) {
+              <span class="stock-status out-of-stock">❌ 已售罄 (Out of Stock)</span>
+            } @else if (product().stock < 10) {
+              <span class="stock-status low-stock">⚠️ 僅剩 {{ product().stock }} 件！欲購從速</span>
+            } @else {
+              <span class="stock-status in-stock">✅ 庫存充裕 (餘 {{ product().stock }} 件)</span>
+            }
+          </div>
+
+          @if (product().stock > 0) {
+            <!-- 購買數量選擇器 -->
+            <div class="quantity-section">
+              <span class="section-label">購買數量</span>
+              <div class="qty-control">
+                <button 
+                  type="button" 
+                  class="qty-btn" 
+                  (click)="onDecreaseQty()" 
+                  [disabled]="quantity() <= 1"
+                >-</button>
+                <span class="qty-val">{{ quantity() }}</span>
+                <button 
+                  type="button" 
+                  class="qty-btn" 
+                  (click)="onIncreaseQty()" 
+                  [disabled]="quantity() >= product().stock"
+                >+</button>
+              </div>
+            </div>
+
+            <!-- 小計與加入購物車 -->
+            <div class="subtotal-section">
+              <span class="section-label">小計金額</span>
+              <span class="subtotal-val">NT$ {{ subtotal() | number:'1.0-0' }}</span>
+            </div>
+          }
+
+          <div class="action-buttons">
+            <button 
+              type="button" 
+              class="btn-add-cart" 
+              (click)="onAddToCart()" 
+              [disabled]="product().stock <= 0 || isAddingToCart()"
+            >
+              @if (isAddingToCart()) {
+                <span>正在加入購物車...</span>
+              } @else if (product().stock <= 0) {
+                <span>🚫 已售罄</span>
+              } @else {
+                <span>🛒 加入購物車</span>
+              }
+            </button>
+            
+            <a routerLink="/" class="btn-back">⬅ 返回首頁選購</a>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

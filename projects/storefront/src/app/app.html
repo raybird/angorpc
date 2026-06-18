@@ -31,152 +31,159 @@
 
   <!-- Main Container -->
   <main class="main-content">
-    <!-- Hero Banner -->
-    <header class="hero-section">
-      <div class="tag">ANGULAR 22 + SSR + oRPC</div>
-      <h1>探索極致安全的購物體驗</h1>
-      <p class="hero-sub">以 TypeScript 端到端類型安全推導，帶來微秒級響應速度與無縫的極速載入體驗</p>
-    </header>
+    @if (isHomePage()) {
+      <!-- Hero Banner -->
+      <header class="hero-section">
+        <div class="tag">ANGULAR 22 + SSR + oRPC</div>
+        <h1>探索極致安全的購物體驗</h1>
+        <p class="hero-sub">以 TypeScript 端到端類型安全推導，帶來微秒級響應速度與無縫的極速載入體驗</p>
+      </header>
 
-    <section class="catalog-section">
-      <div class="section-header">
-        <h2>🔥 今日推薦商品</h2>
-        <p>資料庫自動播種 (Database Seeding) 的精選優質商品</p>
-      </div>
+      <section class="catalog-section">
+        <div class="section-header">
+          <h2>🔥 今日推薦商品</h2>
+          <p>資料庫自動播種 (Database Seeding) 的精選優質商品</p>
+        </div>
 
-      <div class="catalog-container-grid">
-        <!-- 左側進階篩選側邊欄 -->
-        <aside class="filter-sidebar">
-          <!-- 搜尋輸入 -->
-          <div class="filter-group">
-            <label for="search">🔍 商品搜尋</label>
-            <input 
-              id="search" 
-              type="text" 
-              [value]="searchQuery()"
-              (input)="onSearchInput($event)" 
-              placeholder="關鍵字搜尋..." 
-            />
-          </div>
+        <div class="catalog-container-grid">
+          <!-- 左側進階篩選側邊欄 -->
+          <aside class="filter-sidebar">
+            <!-- 搜尋輸入 -->
+            <div class="filter-group">
+              <label for="search">🔍 商品搜尋</label>
+              <input 
+                id="search" 
+                type="text" 
+                [value]="searchQuery()"
+                (input)="onSearchInput($event)" 
+                placeholder="關鍵字搜尋..." 
+              />
+            </div>
 
-          <!-- 分類篩選 -->
-          <div class="filter-group">
-            <label>📂 商品分類</label>
-            <div class="category-links">
-              <button 
-                type="button"
-                class="category-btn" 
-                [class.active]="selectedCategoryId() === null" 
-                (click)="onSelectCategory(null)"
-              >
-                全部商品
-              </button>
-              @for (cat of categories(); track cat.id) {
+            <!-- 分類篩選 -->
+            <div class="filter-group">
+              <label>📂 商品分類</label>
+              <div class="category-links">
                 <button 
                   type="button"
                   class="category-btn" 
-                  [class.active]="selectedCategoryId() === cat.id" 
-                  (click)="onSelectCategory(cat.id)"
+                  [class.active]="selectedCategoryId() === null" 
+                  (click)="onSelectCategory(null)"
                 >
-                  {{ cat.name }}
+                  全部商品
                 </button>
-              }
-            </div>
-          </div>
-
-          <!-- 價格篩選 -->
-          <div class="filter-group">
-            <label>💰 價格區間 (NT$)</label>
-            <div class="price-range-inputs">
-              <input 
-                type="number" 
-                placeholder="最低" 
-                [value]="minPrice() ?? ''"
-                (input)="onPriceChange('min', $event)" 
-              />
-              <span class="range-divider">~</span>
-              <input 
-                type="number" 
-                placeholder="最高" 
-                [value]="maxPrice() ?? ''"
-                (input)="onPriceChange('max', $event)" 
-              />
-            </div>
-          </div>
-
-          <!-- 清除所有篩選 -->
-          <button type="button" class="btn-clear-filters" (click)="onClearFilters()">
-            🧹 清除所有篩選
-          </button>
-        </aside>
-
-        <!-- 右側商品展示區 -->
-        <div class="catalog-main">
-          <!-- 載入中骨架屏 -->
-          @if (isLoading()) {
-            <div class="product-grid">
-              @for (item of [1, 2, 3, 4]; track item) {
-                <div class="skeleton-card">
-                  <div class="skeleton-img"></div>
-                  <div class="skeleton-line title"></div>
-                  <div class="skeleton-line desc"></div>
-                  <div class="skeleton-line price"></div>
-                </div>
-              }
-            </div>
-          }
-
-          <!-- 錯誤狀態 -->
-          @if (errorOccurred()) {
-            <div class="error-banner">
-              <span class="icon">❌</span>
-              <div class="err-details">
-                <h3>無法載入商品目錄</h3>
-                <p>連線至後端 oRPC 伺服器 (http://localhost:3000) 失敗。請確認您的 Node.js 伺服器正在運作中。</p>
+                @for (cat of categories(); track cat.id) {
+                  <button 
+                    type="button"
+                    class="category-btn" 
+                    [class.active]="selectedCategoryId() === cat.id" 
+                    (click)="onSelectCategory(cat.id)"
+                  >
+                    {{ cat.name }}
+                  </button>
+                }
               </div>
             </div>
-          }
 
-          <!-- 動態商品列表 -->
-          @if (!isLoading() && !errorOccurred()) {
-            @if (products().length === 0) {
-              <div class="empty-state">
-                <p>🔍 找不到符合條件的商品。請嘗試修改篩選條件或點擊清除篩選。</p>
+            <!-- 價格篩選 -->
+            <div class="filter-group">
+              <label>💰 價格區間 (NT$)</label>
+              <div class="price-range-inputs">
+                <input 
+                  type="number" 
+                  placeholder="最低" 
+                  [value]="minPrice() ?? ''"
+                  (input)="onPriceChange('min', $event)" 
+                />
+                <span class="range-divider">~</span>
+                <input 
+                  type="number" 
+                  placeholder="最高" 
+                  [value]="maxPrice() ?? ''"
+                  (input)="onPriceChange('max', $event)" 
+                />
               </div>
-            } @else {
+            </div>
+
+            <!-- 清除所有篩選 -->
+            <button type="button" class="btn-clear-filters" (click)="onClearFilters()">
+              🧹 清除所有篩選
+            </button>
+          </aside>
+
+          <!-- 右側商品展示區 -->
+          <div class="catalog-main">
+            <!-- 載入中骨架屏 -->
+            @if (isLoading()) {
               <div class="product-grid">
-                @for (product of products(); track product.id) {
-                  <article class="product-card">
-                    <div class="product-image-placeholder">
-                      <span class="preview-tag">AngoRPC Preview</span>
-                    </div>
-                    
-                    <div class="card-body">
-                      <h3 class="product-name">{{ product.name }}</h3>
-                      <p class="product-desc">{{ product.description }}</p>
-                      
-                      <div class="card-footer-info">
-                        <div class="price-box">
-                          <span class="currency">NT$</span>
-                          <span class="price-val">{{ product.price | number:'1.0-0' }}</span>
-                        </div>
-                        <span class="stock-badge" [class.low-stock]="product.stock < 10">
-                          庫存: {{ product.stock }} 件
-                        </span>
-                      </div>
-
-                      <div class="card-actions">
-                        <button class="btn-add-cart" (click)="onAddToCart(product.id)">🛒 加入購物車</button>
-                      </div>
-                    </div>
-                  </article>
+                @for (item of [1, 2, 3, 4]; track item) {
+                  <div class="skeleton-card">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-line title"></div>
+                    <div class="skeleton-line desc"></div>
+                    <div class="skeleton-line price"></div>
+                  </div>
                 }
               </div>
             }
-          }
+
+            <!-- 錯誤狀態 -->
+            @if (errorOccurred()) {
+              <div class="error-banner">
+                <span class="icon">❌</span>
+                <div class="err-details">
+                  <h3>無法載入商品目錄</h3>
+                  <p>連線至後端 oRPC 伺服器 (http://localhost:3000) 失敗。請確認您的 Node.js 伺服器正在運作中。</p>
+                </div>
+              </div>
+            }
+
+            <!-- 動態商品列表 -->
+            @if (!isLoading() && !errorOccurred()) {
+              @if (products().length === 0) {
+                <div class="empty-state">
+                  <p>🔍 找不到符合條件的商品。請嘗試修改篩選條件或點擊清除篩選。</p>
+                </div>
+              } @else {
+                <div class="product-grid">
+                  @for (product of products(); track product.id) {
+                    <article class="product-card">
+                      <div class="product-image-placeholder" [routerLink]="['/products', product.slug]">
+                        <span class="preview-tag">AngoRPC Preview</span>
+                      </div>
+                      
+                      <div class="card-body">
+                        <h3 class="product-name" [routerLink]="['/products', product.slug]">{{ product.name }}</h3>
+                        <p class="product-desc">{{ product.description }}</p>
+                        
+                        <div class="card-footer-info">
+                          <div class="price-box" [routerLink]="['/products', product.slug]">
+                            <span class="currency">NT$</span>
+                            <span class="price-val">{{ product.price | number:'1.0-0' }}</span>
+                          </div>
+                          <span class="stock-badge" [class.low-stock]="product.stock < 10">
+                            庫存: {{ product.stock }} 件
+                          </span>
+                        </div>
+
+                        <div class="card-actions">
+                          <button class="btn-add-cart" (click)="onAddToCart(product.id)">🛒 加入購物車</button>
+                        </div>
+                      </div>
+                    </article>
+                  }
+                </div>
+              }
+            }
+          </div>
         </div>
+      </section>
+    } @else {
+      <!-- 子頁面渲染容器 -->
+      <div class="router-content-wrapper">
+        <router-outlet />
       </div>
-    </section>
+    }
   </main>
 
   <!-- Footer -->
@@ -184,5 +191,3 @@
     <p>建立日期：2026年06月18日 | 專案技術規格規格對齊驗證 | 開發人員：Antigravity & Raybird</p>
   </footer>
 </div>
-
-<router-outlet />
