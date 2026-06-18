@@ -18,6 +18,7 @@
           }
         </a>
         @if (isAuthenticated()) {
+          <a routerLink="/orders" class="nav-link">歷史訂單</a>
           <span class="user-welcome">👋 歡迎您，{{ currentUser()?.lastName }}{{ currentUser()?.firstName }}</span>
           <button class="btn-outline" (click)="handleLogout()">登出</button>
         } @else {

@@ -149,3 +149,65 @@ export const GetCartOutputSchema = z.object({
     items: z.array(CartItemSchema),
     totalPrice: z.number(),
 });
+// 地址 Schema
+export const AddressSchema = z.object({
+    recipientName: z.string().min(1, "收件人姓名不能為空"),
+    phone: z.string().min(8, "電話格式不符"),
+    address: z.string().min(5, "收件地址需完整填寫"),
+    postalCode: z.string().optional(),
+});
+// 建立訂單輸入 Schema
+export const CreateOrderInputSchema = z.object({
+    shippingAddress: AddressSchema,
+    billingAddress: AddressSchema,
+    items: z.array(z.object({
+        productId: z.string().uuid(),
+        quantity: z.number().int().positive()
+    })).min(1, "購物車至少需包含一項商品"),
+});
+// 建立訂單輸出 Schema
+export const CreateOrderOutputSchema = z.object({
+    orderId: z.string().uuid(),
+    totalAmount: z.number(),
+    status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+    createdAt: z.date().or(z.string()),
+});
+// 查詢歷史訂單輸入 Schema
+export const GetOrdersInputSchema = z.object({
+    page: z.number().int().min(1).default(1),
+    limit: z.number().int().min(1).max(100).default(20),
+    status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]).optional(),
+});
+// 查詢歷史訂單輸出 Schema
+export const GetOrdersOutputSchema = z.object({
+    orders: z.array(z.object({
+        id: z.string().uuid(),
+        totalAmount: z.number(),
+        status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+        createdAt: z.date().or(z.string()),
+    })),
+    pagination: z.object({
+        page: z.number(),
+        limit: z.number(),
+        total: z.number(),
+        totalPages: z.number(),
+    }),
+});
+// 查詢單一訂單詳情輸出 Schema
+export const OrderDetailOutputSchema = z.object({
+    id: z.string().uuid(),
+    userId: z.string().uuid(),
+    totalAmount: z.number(),
+    status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+    shippingAddress: AddressSchema,
+    billingAddress: AddressSchema,
+    orderItems: z.array(z.object({
+        id: z.string().uuid(),
+        productId: z.string().uuid(),
+        name: z.string(),
+        price: z.number(),
+        quantity: z.number(),
+    })),
+    createdAt: z.date().or(z.string()),
+    updatedAt: z.date().or(z.string()),
+});

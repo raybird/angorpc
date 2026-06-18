@@ -32,6 +32,40 @@ export interface CartItem {
   product: Product;
 }
 
+export interface Address {
+  recipientName: string;
+  phone: string;
+  address: string;
+  postalCode?: string;
+}
+
+export interface Order {
+  id: string;
+  totalAmount: number;
+  status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+  createdAt: string | Date;
+}
+
+export interface OrderItemDetail {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export interface OrderDetail {
+  id: string;
+  userId: string;
+  totalAmount: number;
+  status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+  shippingAddress: Address;
+  billingAddress: Address;
+  orderItems: OrderItemDetail[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
 export interface AppRouterClient {
   hello: (input: { name: string }) => Promise<{ message: string; timestamp: string }>;
   user: {
@@ -73,6 +107,32 @@ export interface AppRouterClient {
     addItem: (input: { productId: string; quantity?: number }) => Promise<{ items: CartItem[]; totalPrice: number }>;
     updateItem: (input: { productId: string; quantity: number }) => Promise<{ items: CartItem[]; totalPrice: number }>;
     removeItem: (input: { productId: string }) => Promise<{ items: CartItem[]; totalPrice: number }>;
+  };
+  order: {
+    createOrder: (input: {
+      shippingAddress: Address;
+      billingAddress: Address;
+      items: { productId: string; quantity: number }[];
+    }) => Promise<{
+      orderId: string;
+      totalAmount: number;
+      status: string;
+      createdAt: string | Date;
+    }>;
+    getOrders: (input: {
+      page?: number;
+      limit?: number;
+      status?: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+    }) => Promise<{
+      orders: Order[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }>;
+    getOrderById: (input: { id: string }) => Promise<OrderDetail>;
   };
 }
 

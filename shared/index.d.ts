@@ -181,3 +181,107 @@ export declare const GetCartOutputSchema: z.ZodObject<{
     }, z.core.$strip>>;
     totalPrice: z.ZodNumber;
 }, z.core.$strip>;
+export declare const AddressSchema: z.ZodObject<{
+    recipientName: z.ZodString;
+    phone: z.ZodString;
+    address: z.ZodString;
+    postalCode: z.ZodOptional<z.ZodString>;
+}, z.core.$strip>;
+export declare const CreateOrderInputSchema: z.ZodObject<{
+    shippingAddress: z.ZodObject<{
+        recipientName: z.ZodString;
+        phone: z.ZodString;
+        address: z.ZodString;
+        postalCode: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+    billingAddress: z.ZodObject<{
+        recipientName: z.ZodString;
+        phone: z.ZodString;
+        address: z.ZodString;
+        postalCode: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+    items: z.ZodArray<z.ZodObject<{
+        productId: z.ZodString;
+        quantity: z.ZodNumber;
+    }, z.core.$strip>>;
+}, z.core.$strip>;
+export declare const CreateOrderOutputSchema: z.ZodObject<{
+    orderId: z.ZodString;
+    totalAmount: z.ZodNumber;
+    status: z.ZodEnum<{
+        PENDING: "PENDING";
+        PAID: "PAID";
+        SHIPPED: "SHIPPED";
+        DELIVERED: "DELIVERED";
+        CANCELLED: "CANCELLED";
+        REFUNDED: "REFUNDED";
+    }>;
+    createdAt: z.ZodUnion<[z.ZodDate, z.ZodString]>;
+}, z.core.$strip>;
+export declare const GetOrdersInputSchema: z.ZodObject<{
+    page: z.ZodDefault<z.ZodNumber>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    status: z.ZodOptional<z.ZodEnum<{
+        PENDING: "PENDING";
+        PAID: "PAID";
+        SHIPPED: "SHIPPED";
+        DELIVERED: "DELIVERED";
+        CANCELLED: "CANCELLED";
+        REFUNDED: "REFUNDED";
+    }>>;
+}, z.core.$strip>;
+export declare const GetOrdersOutputSchema: z.ZodObject<{
+    orders: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        totalAmount: z.ZodNumber;
+        status: z.ZodEnum<{
+            PENDING: "PENDING";
+            PAID: "PAID";
+            SHIPPED: "SHIPPED";
+            DELIVERED: "DELIVERED";
+            CANCELLED: "CANCELLED";
+            REFUNDED: "REFUNDED";
+        }>;
+        createdAt: z.ZodUnion<[z.ZodDate, z.ZodString]>;
+    }, z.core.$strip>>;
+    pagination: z.ZodObject<{
+        page: z.ZodNumber;
+        limit: z.ZodNumber;
+        total: z.ZodNumber;
+        totalPages: z.ZodNumber;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+export declare const OrderDetailOutputSchema: z.ZodObject<{
+    id: z.ZodString;
+    userId: z.ZodString;
+    totalAmount: z.ZodNumber;
+    status: z.ZodEnum<{
+        PENDING: "PENDING";
+        PAID: "PAID";
+        SHIPPED: "SHIPPED";
+        DELIVERED: "DELIVERED";
+        CANCELLED: "CANCELLED";
+        REFUNDED: "REFUNDED";
+    }>;
+    shippingAddress: z.ZodObject<{
+        recipientName: z.ZodString;
+        phone: z.ZodString;
+        address: z.ZodString;
+        postalCode: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+    billingAddress: z.ZodObject<{
+        recipientName: z.ZodString;
+        phone: z.ZodString;
+        address: z.ZodString;
+        postalCode: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+    orderItems: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        productId: z.ZodString;
+        name: z.ZodString;
+        price: z.ZodNumber;
+        quantity: z.ZodNumber;
+    }, z.core.$strip>>;
+    createdAt: z.ZodUnion<[z.ZodDate, z.ZodString]>;
+    updatedAt: z.ZodUnion<[z.ZodDate, z.ZodString]>;
+}, z.core.$strip>;

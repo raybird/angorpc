@@ -1,0 +1,206 @@
+<div class="checkout-container">
+  <!-- Neon Background Accents -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <div class="checkout-wrapper">
+    @if (!authState.isAuthenticated()) {
+      <div class="auth-required-card">
+        <div class="icon-wrapper">🔒</div>
+        <h2>請先登入會員</h2>
+        <p>您必須登入後才能存取您的結帳表單。</p>
+        <button class="btn-primary" routerLink="/login">立即登入</button>
+        <a routerLink="/" class="back-link">⬅ 返回商品首頁</a>
+      </div>
+    } @else {
+      <div class="checkout-main">
+        <header class="checkout-header">
+          <div class="brand-tag">Checkout Process</div>
+          <h2>訂單結帳</h2>
+          <p>填寫您的配送資訊以完成您的訂單</p>
+        </header>
+
+        <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()" class="checkout-grid">
+          <!-- 左側表單 -->
+          <div class="checkout-forms-section">
+            
+            <!-- 收件人資訊 (Shipping Address) -->
+            <div class="form-card" formGroupName="shippingAddress">
+              <h3>📦 收件人配送資訊</h3>
+              
+              <div class="form-fields-grid">
+                <!-- 姓名 -->
+                <div class="form-field">
+                  <label for="shipName">收件人姓名</label>
+                  <input 
+                    id="shipName" 
+                    type="text" 
+                    formControlName="recipientName" 
+                    placeholder="請輸入收件人姓名"
+                    [class.input-error]="checkoutForm.get('shippingAddress.recipientName')?.touched && checkoutForm.get('shippingAddress.recipientName')?.invalid"
+                  />
+                  @if (checkoutForm.get('shippingAddress.recipientName')?.touched && checkoutForm.get('shippingAddress.recipientName')?.invalid) {
+                    <span class="error-msg">請填寫收件人姓名</span>
+                  }
+                </div>
+
+                <!-- 電話 -->
+                <div class="form-field">
+                  <label for="shipPhone">聯絡電話</label>
+                  <input 
+                    id="shipPhone" 
+                    type="text" 
+                    formControlName="phone" 
+                    placeholder="例如：0912345678"
+                    [class.input-error]="checkoutForm.get('shippingAddress.phone')?.touched && checkoutForm.get('shippingAddress.phone')?.invalid"
+                  />
+                  @if (checkoutForm.get('shippingAddress.phone')?.touched && checkoutForm.get('shippingAddress.phone')?.invalid) {
+                    <span class="error-msg">請填寫正確的電話號碼格式</span>
+                  }
+                </div>
+
+                <!-- 郵遞區號 -->
+                <div class="form-field">
+                  <label for="shipPostal">郵遞區號 (選填)</label>
+                  <input id="shipPostal" type="text" formControlName="postalCode" placeholder="例如：100" />
+                </div>
+
+                <!-- 完整地址 -->
+                <div class="form-field full-width">
+                  <label for="shipAddress">配送完整地址</label>
+                  <input 
+                    id="shipAddress" 
+                    type="text" 
+                    formControlName="address" 
+                    placeholder="請輸入詳細配送地址"
+                    [class.input-error]="checkoutForm.get('shippingAddress.address')?.touched && checkoutForm.get('shippingAddress.address')?.invalid"
+                  />
+                  @if (checkoutForm.get('shippingAddress.address')?.touched && checkoutForm.get('shippingAddress.address')?.invalid) {
+                    <span class="error-msg">請輸入完整地址 (至少需 5 個字元)</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- 同收件地址切換按鈕 -->
+            <div class="same-address-toggle" (click)="toggleSameAddress()">
+              <div class="checkbox-box" [class.checked]="isSameAddress()">
+                @if (isSameAddress()) {
+                  <span>✓</span>
+                }
+              </div>
+              <span class="toggle-label">帳單地址與收件人配送資訊相同</span>
+            </div>
+
+            <!-- 帳單資訊 (Billing Address) -->
+            @if (!isSameAddress()) {
+              <div class="form-card billing-card" formGroupName="billingAddress">
+                <h3>💳 帳單付款人資訊</h3>
+                
+                <div class="form-fields-grid">
+                  <!-- 姓名 -->
+                  <div class="form-field">
+                    <label for="billName">付款人姓名</label>
+                    <input 
+                      id="billName" 
+                      type="text" 
+                      formControlName="recipientName" 
+                      placeholder="請輸入付款人姓名"
+                      [class.input-error]="checkoutForm.get('billingAddress.recipientName')?.touched && checkoutForm.get('billingAddress.recipientName')?.invalid"
+                    />
+                    @if (checkoutForm.get('billingAddress.recipientName')?.touched && checkoutForm.get('billingAddress.recipientName')?.invalid) {
+                      <span class="error-msg">請填寫付款人姓名</span>
+                    }
+                  </div>
+
+                  <!-- 電話 -->
+                  <div class="form-field">
+                    <label for="billPhone">聯絡電話</label>
+                    <input 
+                      id="billPhone" 
+                      type="text" 
+                      formControlName="phone" 
+                      placeholder="例如：0912345678"
+                      [class.input-error]="checkoutForm.get('billingAddress.phone')?.touched && checkoutForm.get('billingAddress.phone')?.invalid"
+                    />
+                    @if (checkoutForm.get('billingAddress.phone')?.touched && checkoutForm.get('billingAddress.phone')?.invalid) {
+                      <span class="error-msg">請填寫正確的電話號碼格式</span>
+                    }
+                  </div>
+
+                  <!-- 郵遞區號 -->
+                  <div class="form-field">
+                    <label for="billPostal">郵遞區號 (選填)</label>
+                    <input id="billPostal" type="text" formControlName="postalCode" placeholder="例如：100" />
+                  </div>
+
+                  <!-- 完整地址 -->
+                  <div class="form-field full-width">
+                    <label for="billAddress">帳單完整地址</label>
+                    <input 
+                      id="billAddress" 
+                      type="text" 
+                      formControlName="address" 
+                      placeholder="請輸入帳單詳細地址"
+                      [class.input-error]="checkoutForm.get('billingAddress.address')?.touched && checkoutForm.get('billingAddress.address')?.invalid"
+                    />
+                    @if (checkoutForm.get('billingAddress.address')?.touched && checkoutForm.get('billingAddress.address')?.invalid) {
+                      <span class="error-msg">請輸入完整地址 (至少需 5 個字元)</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- 右側摘要與提交 -->
+          <div class="checkout-summary-section">
+            <div class="summary-card">
+              <h3>🛍 訂單商品摘要</h3>
+
+              <div class="summary-items-list">
+                @for (item of cartState.cartItems(); track item.id) {
+                  <div class="summary-item">
+                    <div class="item-details">
+                      <span class="item-name">{{ item.product.name }}</span>
+                      <span class="item-qty">x {{ item.quantity }}</span>
+                    </div>
+                    <span class="item-price">${{ (item.product.price * item.quantity) | number:'1.2-2' }}</span>
+                  </div>
+                }
+              </div>
+
+              <div class="summary-divider"></div>
+
+              <div class="summary-row">
+                <span>小計</span>
+                <span>${{ cartState.totalPrice() | number:'1.2-2' }}</span>
+              </div>
+              <div class="summary-row">
+                <span>運費</span>
+                <span class="free-shipping">免運費</span>
+              </div>
+
+              <div class="summary-divider"></div>
+
+              <div class="summary-row total-row">
+                <span>應付總額</span>
+                <span class="total-price">${{ cartState.totalPrice() | number:'1.2-2' }}</span>
+              </div>
+
+              <button type="submit" class="btn-checkout" [disabled]="isLoading() || cartState.cartItems().length === 0">
+                @if (isLoading()) {
+                  <span>下單處理中...</span>
+                } @else {
+                  <span>確認送出訂單</span>
+                }
+              </button>
+
+              <a routerLink="/cart" class="back-to-cart">⬅ 返回購物車修改</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
+</div>

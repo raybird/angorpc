@@ -1,0 +1,148 @@
+<div class="orders-container">
+  <!-- Neon Background Accents -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <div class="orders-wrapper">
+    @if (!authState.isAuthenticated()) {
+      <div class="auth-required-card">
+        <div class="icon-wrapper">🔒</div>
+        <h2>請先登入會員</h2>
+        <p>您必須登入後才能查看您的歷史訂單紀錄。</p>
+        <button class="btn-primary" routerLink="/login">立即登入</button>
+        <a routerLink="/" class="back-link">⬅ 返回商品首頁</a>
+      </div>
+    } @else {
+      <div class="orders-main">
+        <header class="orders-header">
+          <div class="brand-tag">Order History</div>
+          <h2>您的歷史訂單</h2>
+          <p>查看您過去在平台的所有消費與訂單詳情</p>
+        </header>
+
+        <!-- 訂單清單卡 -->
+        <div class="orders-card">
+          @if (isLoading()) {
+            <!-- Loading skeleton -->
+            <div class="loading-wrapper">
+              <div class="skeleton-line title"></div>
+              <div class="skeleton-line row"></div>
+              <div class="skeleton-line row"></div>
+            </div>
+          } @else if (errorOccurred()) {
+            <div class="error-state">
+              <span class="icon">❌</span>
+              <p>無法取得訂單資料。請確認與伺服器的連線狀態。</p>
+            </div>
+          } @else if (orders().length === 0) {
+            <div class="empty-orders">
+              <div class="empty-icon">📁</div>
+              <h3>尚無任何訂單紀錄</h3>
+              <p>您還沒有在平台進行過消費結帳。快去挑選您心儀的商品吧！</p>
+              <button class="btn-primary" routerLink="/">前往購物目錄</button>
+            </div>
+          } @else {
+            <div class="orders-list">
+              @for (order of orders(); track order.id) {
+                <div class="order-item-group">
+                  <!-- 訂單摘要列 -->
+                  <div class="order-summary-row" (click)="toggleOrderDetail(order.id)">
+                    <div class="summary-col id-col">
+                      <span class="label">訂單編號</span>
+                      <span class="value">{{ order.id }}</span>
+                    </div>
+
+                    <div class="summary-col date-col">
+                      <span class="label">下單時間</span>
+                      <span class="value">{{ order.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
+                    </div>
+
+                    <div class="summary-col amount-col">
+                      <span class="label">應付總額</span>
+                      <span class="value price">${{ order.totalAmount | number:'1.2-2' }}</span>
+                    </div>
+
+                    <div class="summary-col status-col">
+                      <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                        {{ getStatusLabel(order.status) }}
+                      </span>
+                    </div>
+
+                    <div class="summary-col action-col">
+                      <button class="btn-toggle" [class.rotated]="selectedOrderId() === order.id">
+                        ▼
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- 訂單詳細明細展開區塊 -->
+                  @if (selectedOrderId() === order.id) {
+                    <div class="order-detail-expanded">
+                      @if (isDetailLoading()) {
+                        <div class="detail-loader">
+                          <div class="spinner"></div>
+                          <span>正在加載訂單明細...</span>
+                        </div>
+                      } @else if (activeOrderDetail()) {
+                        <div class="detail-content">
+                          
+                          <!-- 商品明細表 -->
+                          <div class="detail-section items-section">
+                            <h4>🛒 訂購商品明細</h4>
+                            <div class="detail-items-table">
+                              <div class="table-header">
+                                <span>商品名稱</span>
+                                <span>單價</span>
+                                <span>數量</span>
+                                <span>小計</span>
+                              </div>
+                              @for (item of activeOrderDetail()?.orderItems; track item.id) {
+                                <div class="table-row">
+                                  <span class="p-name">{{ item.name }}</span>
+                                  <span>${{ item.price | number:'1.2-2' }}</span>
+                                  <span class="p-qty">x {{ item.quantity }}</span>
+                                  <span class="p-subtotal">${{ (item.price * item.quantity) | number:'1.2-2' }}</span>
+                                </div>
+                              }
+                            </div>
+                          </div>
+
+                          <!-- 地址配送資訊 -->
+                          <div class="detail-section address-section-grid">
+                            <div class="address-box">
+                              <h4>📦 配送資訊</h4>
+                              <p><strong>收件姓名：</strong>{{ activeOrderDetail()?.shippingAddress?.recipientName }}</p>
+                              <p><strong>電話號碼：</strong>{{ activeOrderDetail()?.shippingAddress?.phone }}</p>
+                              <p><strong>配送地址：</strong>{{ activeOrderDetail()?.shippingAddress?.address }}</p>
+                              @if (activeOrderDetail()?.shippingAddress?.postalCode) {
+                                <p><strong>郵遞區號：</strong>{{ activeOrderDetail()?.shippingAddress?.postalCode }}</p>
+                              }
+                            </div>
+
+                            <div class="address-box">
+                              <h4>💳 帳單資訊</h4>
+                              <p><strong>付款姓名：</strong>{{ activeOrderDetail()?.billingAddress?.recipientName }}</p>
+                              <p><strong>電話號碼：</strong>{{ activeOrderDetail()?.billingAddress?.phone }}</p>
+                              <p><strong>帳單地址：</strong>{{ activeOrderDetail()?.billingAddress?.address }}</p>
+                              @if (activeOrderDetail()?.billingAddress?.postalCode) {
+                                <p><strong>郵遞區號：</strong>{{ activeOrderDetail()?.billingAddress?.postalCode }}</p>
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="footer-actions">
+          <a routerLink="/" class="back-link">⬅ 返回商品首頁</a>
+        </div>
+      </div>
+    }
+  </div>
+</div>
