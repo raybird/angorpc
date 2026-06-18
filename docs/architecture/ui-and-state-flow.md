@@ -11,29 +11,29 @@
 前台專注於 SEO 與載入效能，所有面向終端消費者的路由皆預設開啟 **SSR (伺服器端渲染)** 與漸進式水合 (Client Hydration)。
 
 ### 1.1 前台路由表 (Storefront Routes)
-所有路由使用 `MainLayoutComponent` 佈局組件包覆。
+前台路由表已完全與專案中的路由配置同步，未登入保護與訂單查詢均與後端 API 緊密結合。
 
 | 網址路徑 (Path) | 對應頁面組件 | 渲染模式 | 說明 |
 | :--- | :--- | :--- | :--- |
-| `/` | `HomeComponent` | SSR + Dynamic | 首頁，展示精選商品與分類入口 |
-| `/products` | `ProductListComponent` | SSR + Dynamic | 商品列表頁，支援分類篩選與關鍵字搜尋 |
-| `/products/:slug` | `ProductDetailComponent` | SSR + Dynamic | 商品詳情頁，展示詳細介紹與加入購物車 |
-| `/cart` | `CartComponent` | CSR Only | 購物車清單與數量編輯頁（不需 SEO） |
-| `/checkout` | `CheckoutComponent` | CSR Only (Guard) | 結帳與填寫收件資訊頁，受 `AuthGuard` 保護 |
-| `/orders/:id` | `OrderDetailComponent` | CSR Only (Guard) | 訂單追蹤與明細頁，受 `AuthGuard` 保護 |
-| `/user/profile` | `UserProfileComponent` | CSR Only (Guard) | 會員個人資料管理頁，受 `AuthGuard` 保護 |
+| `/` | `App` (首頁條件渲染) | SSR + Dynamic | 根元件，在首頁時顯示商品目錄與進階搜尋篩選面板 |
+| `/products/:slug` | `ProductDetailComponent` | SSR | 商品詳情頁，展示詳細介紹、庫存狀態與加入購物車 |
+| `/cart` | `CartComponent` | CSR Only | 購物車清單與數量編輯頁 |
+| `/checkout` | `CheckoutComponent` | CSR Only (Guard) | 結帳與填寫收件/帳單地址頁，受 `AuthGuard` 保護 |
+| `/orders` | `OrdersComponent` | CSR Only (Guard) | 歷史訂單列表，支援手風琴點擊非同步載入明細，具快取機制 |
 | `/login` | `LoginComponent` | CSR Only | 用戶登入頁 |
 | `/register` | `RegisterComponent` | CSR Only | 用戶註冊頁 |
 
 ### 1.2 前台組件關係結構
 ```
-MainLayoutComponent
-├── HeaderComponent (含搜尋列、購物車摘要及會員狀態)
-├── RouterOutlet (渲染各子頁面組件)
-│   ├── HomeComponent (展示 ProductCardComponent 列表)
-│   ├── ProductDetailComponent (購買數量選擇器、評論系統)
-│   └── CartComponent (購物車明細清單、結帳按鈕)
-└── FooterComponent (網站宣傳、多語言/多幣種切換器)
+App (根元件，包含 Navigation Bar、Footer 與全站 Glowing 效果)
+├── isHomePage() = true：直接渲染首頁 Catalog Section (商品卡片、篩選側邊欄)
+└── isHomePage() = false：渲染 RouterOutlet 子路由容器
+    ├── ProductDetailComponent (商品詳情頁)
+    ├── CartComponent (購物車明細清單)
+    ├── CheckoutComponent (結帳與收件/帳單地址輸入表單)
+    ├── OrdersComponent (歷史訂單與明細展示手風琴)
+    ├── LoginComponent (會員登入)
+    └── RegisterComponent (會員註冊)
 ```
 
 ---

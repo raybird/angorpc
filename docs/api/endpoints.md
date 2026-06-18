@@ -110,6 +110,8 @@ const GetProductsInput = z.object({
   limit: z.number().int().min(1).max(100).default(20),
   categoryId: z.string().uuid().optional(),
   search: z.string().optional(),
+  minPrice: z.number().optional(),
+  maxPrice: z.number().optional(),
   includeInactive: z.boolean().default(false) // 僅限 ADMIN 傳入 true
 })
 ```
@@ -201,6 +203,19 @@ const UpdateProductInput = z.object({
 })
 ```
 * **輸出驗證 Schema (Zod)**：與 `ProductDetailOutput` 一致。
+
+#### 2.2.5 查詢商品分類清單 (product.getCategories)
+* **功能描述**：取得資料庫中所有的活躍商品分類。
+* **權限要求**：公開 (Public)
+* **輸入驗證 Schema (Zod)**：`z.object({})` (無輸入)
+* **輸出驗證 Schema (Zod)**：
+```typescript
+const GetCategoriesOutput = z.array(z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  slug: z.string()
+}))
+```
 
 ---
 
