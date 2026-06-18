@@ -72,6 +72,8 @@ export declare const GetProductsInputSchema: z.ZodObject<{
     categoryId: z.ZodOptional<z.ZodString>;
     search: z.ZodOptional<z.ZodString>;
     includeInactive: z.ZodDefault<z.ZodBoolean>;
+    minPrice: z.ZodOptional<z.ZodNumber>;
+    maxPrice: z.ZodOptional<z.ZodNumber>;
 }, z.core.$strip>;
 export declare const GetProductsOutputSchema: z.ZodObject<{
     products: z.ZodArray<z.ZodObject<{
@@ -285,3 +287,8 @@ export declare const OrderDetailOutputSchema: z.ZodObject<{
     createdAt: z.ZodUnion<[z.ZodDate, z.ZodString]>;
     updatedAt: z.ZodUnion<[z.ZodDate, z.ZodString]>;
 }, z.core.$strip>;
+export declare const GetCategoriesOutputSchema: z.ZodArray<z.ZodObject<{
+    id: z.ZodString;
+    name: z.ZodString;
+    slug: z.ZodString;
+}, z.core.$strip>>;

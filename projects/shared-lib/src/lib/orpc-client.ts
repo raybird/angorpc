@@ -66,6 +66,12 @@ export interface OrderDetail {
   updatedAt: string | Date;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface AppRouterClient {
   hello: (input: { name: string }) => Promise<{ message: string; timestamp: string }>;
   user: {
@@ -80,6 +86,8 @@ export interface AppRouterClient {
       categoryId?: string;
       search?: string;
       includeInactive?: boolean;
+      minPrice?: number;
+      maxPrice?: number;
     }) => Promise<{
       products: Product[];
       pagination: {
@@ -101,6 +109,7 @@ export interface AppRouterClient {
       };
       updatedAt: string | Date;
     }>;
+    getCategories: () => Promise<Category[]>;
   };
   cart: {
     getCart: () => Promise<{ items: CartItem[]; totalPrice: number }>;

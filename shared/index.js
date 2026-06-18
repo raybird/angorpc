@@ -69,6 +69,8 @@ export const GetProductsInputSchema = z.object({
     categoryId: z.string().uuid().optional(),
     search: z.string().optional(),
     includeInactive: z.boolean().default(false),
+    minPrice: z.number().optional(),
+    maxPrice: z.number().optional(),
 });
 // 分頁商品查詢輸出 Schema
 export const GetProductsOutputSchema = z.object({
@@ -211,3 +213,9 @@ export const OrderDetailOutputSchema = z.object({
     createdAt: z.date().or(z.string()),
     updatedAt: z.date().or(z.string()),
 });
+// 查詢分類清單輸出 Schema
+export const GetCategoriesOutputSchema = z.array(z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    slug: z.string(),
+}));

@@ -38,76 +38,144 @@
       <p class="hero-sub">以 TypeScript 端到端類型安全推導，帶來微秒級響應速度與無縫的極速載入體驗</p>
     </header>
 
-    <!-- Product catalog shelf -->
     <section class="catalog-section">
       <div class="section-header">
         <h2>🔥 今日推薦商品</h2>
         <p>資料庫自動播種 (Database Seeding) 的精選優質商品</p>
       </div>
 
-      <!-- Loading skeleton shelf -->
-      @if (isLoading()) {
-        <div class="product-grid">
-          @for (item of [1, 2, 3, 4]; track item) {
-            <div class="skeleton-card">
-              <div class="skeleton-img"></div>
-              <div class="skeleton-line title"></div>
-              <div class="skeleton-line desc"></div>
-              <div class="skeleton-line price"></div>
+      <div class="catalog-container-grid">
+        <!-- 左側進階篩選側邊欄 -->
+        <aside class="filter-sidebar">
+          <!-- 搜尋輸入 -->
+          <div class="filter-group">
+            <label for="search">🔍 商品搜尋</label>
+            <input 
+              id="search" 
+              type="text" 
+              [value]="searchQuery()"
+              (input)="onSearchInput($event)" 
+              placeholder="關鍵字搜尋..." 
+            />
+          </div>
+
+          <!-- 分類篩選 -->
+          <div class="filter-group">
+            <label>📂 商品分類</label>
+            <div class="category-links">
+              <button 
+                type="button"
+                class="category-btn" 
+                [class.active]="selectedCategoryId() === null" 
+                (click)="onSelectCategory(null)"
+              >
+                全部商品
+              </button>
+              @for (cat of categories(); track cat.id) {
+                <button 
+                  type="button"
+                  class="category-btn" 
+                  [class.active]="selectedCategoryId() === cat.id" 
+                  (click)="onSelectCategory(cat.id)"
+                >
+                  {{ cat.name }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- 價格篩選 -->
+          <div class="filter-group">
+            <label>💰 價格區間 (NT$)</label>
+            <div class="price-range-inputs">
+              <input 
+                type="number" 
+                placeholder="最低" 
+                [value]="minPrice() ?? ''"
+                (input)="onPriceChange('min', $event)" 
+              />
+              <span class="range-divider">~</span>
+              <input 
+                type="number" 
+                placeholder="最高" 
+                [value]="maxPrice() ?? ''"
+                (input)="onPriceChange('max', $event)" 
+              />
+            </div>
+          </div>
+
+          <!-- 清除所有篩選 -->
+          <button type="button" class="btn-clear-filters" (click)="onClearFilters()">
+            🧹 清除所有篩選
+          </button>
+        </aside>
+
+        <!-- 右側商品展示區 -->
+        <div class="catalog-main">
+          <!-- 載入中骨架屏 -->
+          @if (isLoading()) {
+            <div class="product-grid">
+              @for (item of [1, 2, 3, 4]; track item) {
+                <div class="skeleton-card">
+                  <div class="skeleton-img"></div>
+                  <div class="skeleton-line title"></div>
+                  <div class="skeleton-line desc"></div>
+                  <div class="skeleton-line price"></div>
+                </div>
+              }
             </div>
           }
-        </div>
-      }
 
-      <!-- Error State -->
-      @if (errorOccurred()) {
-        <div class="error-banner">
-          <span class="icon">❌</span>
-          <div class="err-details">
-            <h3>無法載入商品目錄</h3>
-            <p>連線至後端 oRPC 伺服器 (http://localhost:3000) 失敗。請確認您的 Node.js 伺服器正在運作中。</p>
-          </div>
-        </div>
-      }
+          <!-- 錯誤狀態 -->
+          @if (errorOccurred()) {
+            <div class="error-banner">
+              <span class="icon">❌</span>
+              <div class="err-details">
+                <h3>無法載入商品目錄</h3>
+                <p>連線至後端 oRPC 伺服器 (http://localhost:3000) 失敗。請確認您的 Node.js 伺服器正在運作中。</p>
+              </div>
+            </div>
+          }
 
-      <!-- Dynamic Product Cards List -->
-      @if (!isLoading() && !errorOccurred()) {
-        @if (products().length === 0) {
-          <div class="empty-state">
-            <p>目前目錄中尚無商品，請執行 seed 腳本播種數據。</p>
-          </div>
-        } @else {
-          <div class="product-grid">
-            @for (product of products(); track product.id) {
-              <article class="product-card">
-                <!-- Product Preview placeholder with neon background -->
-                <div class="product-image-placeholder">
-                  <span class="preview-tag">AngoRPC Preview</span>
-                </div>
-                
-                <div class="card-body">
-                  <h3 class="product-name">{{ product.name }}</h3>
-                  <p class="product-desc">{{ product.description }}</p>
-                  
-                  <div class="card-footer-info">
-                    <div class="price-box">
-                      <span class="currency">NT$</span>
-                      <span class="price-val">{{ product.price | number:'1.0-0' }}</span>
+          <!-- 動態商品列表 -->
+          @if (!isLoading() && !errorOccurred()) {
+            @if (products().length === 0) {
+              <div class="empty-state">
+                <p>🔍 找不到符合條件的商品。請嘗試修改篩選條件或點擊清除篩選。</p>
+              </div>
+            } @else {
+              <div class="product-grid">
+                @for (product of products(); track product.id) {
+                  <article class="product-card">
+                    <div class="product-image-placeholder">
+                      <span class="preview-tag">AngoRPC Preview</span>
                     </div>
-                    <span class="stock-badge" [class.low-stock]="product.stock < 10">
-                      庫存: {{ product.stock }} 件
-                    </span>
-                  </div>
+                    
+                    <div class="card-body">
+                      <h3 class="product-name">{{ product.name }}</h3>
+                      <p class="product-desc">{{ product.description }}</p>
+                      
+                      <div class="card-footer-info">
+                        <div class="price-box">
+                          <span class="currency">NT$</span>
+                          <span class="price-val">{{ product.price | number:'1.0-0' }}</span>
+                        </div>
+                        <span class="stock-badge" [class.low-stock]="product.stock < 10">
+                          庫存: {{ product.stock }} 件
+                        </span>
+                      </div>
 
-                  <div class="card-actions">
-                    <button class="btn-add-cart" (click)="onAddToCart(product.id)">🛒 加入購物車</button>
-                  </div>
-                </div>
-              </article>
+                      <div class="card-actions">
+                        <button class="btn-add-cart" (click)="onAddToCart(product.id)">🛒 加入購物車</button>
+                      </div>
+                    </div>
+                  </article>
+                }
+              </div>
             }
-          </div>
-        }
-      }
+          }
+        </div>
+      </div>
     </section>
   </main>
 
@@ -118,471 +186,3 @@
 </div>
 
 <router-outlet />
-
-<style>
-  :host {
-    display: block;
-    box-sizing: border-box;
-    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
-  }
-
-  .storefront-layout {
-    position: relative;
-    min-height: 100vh;
-    width: 100%;
-    background-color: #090b10;
-    color: #f3f4f6;
-    overflow-x: hidden;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-  }
-
-  /* Aurora Glow Effect */
-  .aurora-glow {
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    filter: blur(150px);
-    opacity: 0.1;
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  .aurora-1 {
-    background: radial-gradient(circle, #6366f1 0%, transparent 70%);
-    top: -200px;
-    left: -150px;
-  }
-
-  .aurora-2 {
-    background: radial-gradient(circle, #ec4899 0%, transparent 70%);
-    bottom: -250px;
-    right: -150px;
-  }
-
-  /* Navbar */
-  .navbar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(9, 11, 16, 0.8);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .nav-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .brand-logo {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: #ffffff;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    
-    .logo-icon {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-  }
-
-  .nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-  }
-
-  .user-welcome {
-    font-size: 0.9rem;
-    color: #9ca3af;
-    font-weight: 500;
-  }
-
-  .nav-link {
-    color: #9ca3af;
-    font-size: 0.9rem;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s ease;
-
-    &:hover {
-      color: #ffffff;
-    }
-  }
-
-  .btn-primary-sm {
-    padding: 0.45rem 1rem;
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    color: #ffffff;
-    text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 600;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
-    transition: all 0.2s ease;
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 15px rgba(99, 102, 241, 0.35);
-    }
-  }
-
-  .btn-outline {
-    padding: 0.4rem 0.9rem;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #d1d5db;
-    font-size: 0.85rem;
-    font-weight: 600;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      border-color: #ef4444;
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.05);
-    }
-  }
-
-  /* Main Container */
-  .main-content {
-    flex: 1;
-    max-width: 1100px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 3rem 1.5rem;
-    z-index: 10;
-    position: relative;
-    box-sizing: border-box;
-  }
-
-  /* Hero Section */
-  .hero-section {
-    text-align: center;
-    margin-bottom: 4rem;
-
-    .tag {
-      display: inline-block;
-      padding: 0.3rem 0.8rem;
-      background: rgba(99, 102, 241, 0.1);
-      border: 1px solid rgba(99, 102, 241, 0.2);
-      border-radius: 99px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #a5b4fc;
-      letter-spacing: 0.05em;
-      margin-bottom: 1.25rem;
-    }
-
-    h1 {
-      font-size: 2.75rem;
-      font-weight: 800;
-      margin: 0;
-      background: linear-gradient(135deg, #ffffff 40%, #c7d2fe 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -0.02em;
-    }
-
-    .hero-sub {
-      font-size: 1.1rem;
-      color: #9ca3af;
-      max-width: 650px;
-      margin: 0.75rem auto 0;
-      line-height: 1.6;
-    }
-  }
-
-  /* Catalog Section */
-  .catalog-section {
-    margin-bottom: 2rem;
-  }
-
-  .section-header {
-    margin-bottom: 2.5rem;
-
-    h2 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin: 0;
-      color: #ffffff;
-    }
-
-    p {
-      font-size: 0.9rem;
-      color: #6b7280;
-      margin-top: 0.35rem;
-    }
-  }
-
-  /* Product Grid */
-  .product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1.75rem;
-  }
-
-  /* Product Card style */
-  .product-card {
-    background: rgba(22, 28, 41, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 18px;
-    overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
-
-    &:hover {
-      transform: translateY(-5px);
-      border-color: rgba(99, 102, 241, 0.25);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
-      background: rgba(22, 28, 41, 0.75);
-    }
-  }
-
-  .product-image-placeholder {
-    height: 160px;
-    background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-
-    .preview-tag {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.25);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      border: 1px dashed rgba(255, 255, 255, 0.15);
-      padding: 0.3rem 0.65rem;
-      border-radius: 6px;
-    }
-  }
-
-  .card-body {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-  }
-
-  .product-name {
-    font-size: 1.15rem;
-    font-weight: 700;
-    margin: 0;
-    color: #ffffff;
-    line-height: 1.3;
-  }
-
-  .product-desc {
-    font-size: 0.85rem;
-    color: #9ca3af;
-    line-height: 1.5;
-    margin: 0.75rem 0 1.25rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    height: 2.55rem;
-  }
-
-  .card-footer-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
-    margin-bottom: 1.25rem;
-  }
-
-  .price-box {
-    display: flex;
-    align-items: baseline;
-    gap: 0.15rem;
-
-    .currency {
-      font-size: 0.85rem;
-      color: #a5b4fc;
-      font-weight: 600;
-    }
-
-    .price-val {
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: #ffffff;
-    }
-  }
-
-  .stock-badge {
-    padding: 0.2rem 0.5rem;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 6px;
-    font-size: 0.75rem;
-    color: #9ca3af;
-    
-    &.low-stock {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.2);
-      color: #fca5a5;
-    }
-  }
-
-  .btn-add-cart {
-    width: 100%;
-    padding: 0.75rem;
-    background: rgba(99, 102, 241, 0.08);
-    border: 1px solid rgba(99, 102, 241, 0.25);
-    color: #a5b4fc;
-    font-size: 0.85rem;
-    font-weight: 600;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-      color: #ffffff;
-      border-color: transparent;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
-    }
-  }
-
-  /* Error Banner */
-  .error-banner {
-    display: flex;
-    align-items: flex-start;
-    gap: 1.25rem;
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-    border-radius: 16px;
-    padding: 1.5rem;
-
-    .icon {
-      font-size: 1.5rem;
-    }
-
-    h3 {
-      margin: 0;
-      color: #fca5a5;
-      font-size: 1.1rem;
-    }
-
-    p {
-      margin: 0.25rem 0 0;
-      font-size: 0.85rem;
-      color: #9ca3af;
-      line-height: 1.4;
-    }
-  }
-
-  /* Skeleton Loading items */
-  .skeleton-card {
-    background: rgba(22, 28, 41, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    border-radius: 18px;
-    padding: 1.5rem;
-    box-sizing: border-box;
-
-    .skeleton-img {
-      height: 120px;
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 10px;
-      animation: pulseGlow 1.5s infinite ease-in-out;
-    }
-
-    .skeleton-line {
-      height: 16px;
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 4px;
-      margin-top: 1rem;
-      animation: pulseGlow 1.5s infinite ease-in-out;
-
-      &.title { width: 70%; }
-      &.desc { width: 95%; height: 32px; }
-      &.price { width: 40%; }
-    }
-  }
-
-  @keyframes pulseGlow {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-  }
-
-  /* Footer */
-  .footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 2rem 1.5rem;
-    text-align: center;
-    color: #4b5563;
-    font-size: 0.8rem;
-    margin-top: auto;
-  }
-
-  @media (max-width: 640px) {
-    .hero-section h1 {
-      font-size: 2rem;
-    }
-    .product-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .cart-nav-btn {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    text-decoration: none;
-    color: #ffffff;
-    transition: all 0.2s ease;
-    cursor: pointer;
-
-    &:hover {
-      background: rgba(99, 102, 241, 0.15);
-      border-color: rgba(99, 102, 241, 0.35);
-      color: #a5b4fc;
-      transform: translateY(-1px);
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
-
-    .cart-icon {
-      font-size: 1.2rem;
-      line-height: 1;
-    }
-
-    .cart-badge {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      background: #ef4444;
-      color: #ffffff;
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 0.2rem 0.4rem;
-      border-radius: 99px;
-      line-height: 1;
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
-    }
-  }
-</style>

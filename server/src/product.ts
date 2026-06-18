@@ -4,14 +4,15 @@ import { prisma } from './db.js';
 import {
   GetProductsInputSchema,
   GetProductsOutputSchema,
-  ProductDetailOutputSchema
+  ProductDetailOutputSchema,
+  GetCategoriesOutputSchema
 } from '../../shared/index.js';
 
 export const getProducts = os
   .input(GetProductsInputSchema)
   .output(GetProductsOutputSchema)
   .handler(async ({ input }: { input: z.infer<typeof GetProductsInputSchema> }) => {
-    const { page, limit, categoryId, search, includeInactive } = input;
+    const { page, limit, categoryId, search, includeInactive, minPrice, maxPrice } = input;
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -29,6 +30,16 @@ export const getProducts = os
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
       ];
+    }
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.price = {};
+      if (minPrice !== undefined) {
+        where.price.gte = minPrice;
+      }
+      if (maxPrice !== undefined) {
+        where.price.lte = maxPrice;
+      }
     }
 
     const [products, total] = await Promise.all([
@@ -91,8 +102,18 @@ export const getProductById = os
     };
   });
 
+export const getCategories = os
+  .output(GetCategoriesOutputSchema)
+  .handler(async () => {
+    const categories = await prisma.category.findMany({
+      orderBy: { name: 'asc' }
+    });
+    return categories;
+  });
+
 export const productRouter = {
   getProducts,
   getProductById,
+  getCategories,
 };
 export type ProductRouter = typeof productRouter;

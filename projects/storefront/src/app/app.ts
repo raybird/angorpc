@@ -1,7 +1,9 @@
 import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { OrpcClientService, AuthStateService, Product, CartStateService } from 'shared-lib';
+import { OrpcClientService, AuthStateService, Product, CartStateService, Category } from 'shared-lib';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -13,8 +15,18 @@ import { OrpcClientService, AuthStateService, Product, CartStateService } from '
 export class App implements OnInit {
   protected readonly title = signal('AngoRPC Storefront');
   protected readonly products = signal<Product[]>([]);
+  protected readonly categories = signal<Category[]>([]);
   protected readonly isLoading = signal<boolean>(true);
   protected readonly errorOccurred = signal<boolean>(false);
+
+  // 篩選與搜尋狀態 Signals
+  protected readonly selectedCategoryId = signal<string | null>(null);
+  protected readonly searchQuery = signal<string>('');
+  protected readonly minPrice = signal<number | null>(null);
+  protected readonly maxPrice = signal<number | null>(null);
+
+  // RxJS Search Subject 用於搜尋防抖 (Debounce)
+  private searchSubject = new Subject<string>();
 
   private orpc = inject(OrpcClientService);
   private authState = inject(AuthStateService);
@@ -26,16 +38,38 @@ export class App implements OnInit {
   protected readonly cartCount = this.cartState.cartCount;
 
   async ngOnInit() {
-    await this.fetchProducts();
+    // 訂閱搜尋防抖邏輯
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe((query) => {
+      this.searchQuery.set(query);
+      this.fetchProducts();
+    });
+
+    // 初始化時並行查詢商品與商品分類
+    await Promise.all([
+      this.fetchProducts(),
+      this.fetchCategories()
+    ]);
   }
 
   async fetchProducts() {
     this.isLoading.set(true);
     this.errorOccurred.set(false);
     try {
+      const categoryId = this.selectedCategoryId() || undefined;
+      const search = this.searchQuery() || undefined;
+      const minPrice = this.minPrice() !== null ? Number(this.minPrice()) : undefined;
+      const maxPrice = this.maxPrice() !== null ? Number(this.maxPrice()) : undefined;
+
       const response = await this.orpc.client.product.getProducts({
         page: 1,
-        limit: 12
+        limit: 12,
+        categoryId,
+        search,
+        minPrice,
+        maxPrice
       });
       this.products.set(response.products);
     } catch (err) {
@@ -44,6 +78,44 @@ export class App implements OnInit {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  async fetchCategories() {
+    try {
+      const list = await this.orpc.client.product.getCategories();
+      this.categories.set(list);
+    } catch (err) {
+      console.error('oRPC Fetch Categories Error:', err);
+    }
+  }
+
+  protected onSearchInput(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.searchSubject.next(value);
+  }
+
+  protected onSelectCategory(categoryId: string | null) {
+    this.selectedCategoryId.set(categoryId);
+    this.fetchProducts();
+  }
+
+  protected onPriceChange(field: 'min' | 'max', event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    const price = value ? Number(value) : null;
+    if (field === 'min') {
+      this.minPrice.set(price);
+    } else {
+      this.maxPrice.set(price);
+    }
+    this.fetchProducts();
+  }
+
+  protected onClearFilters() {
+    this.selectedCategoryId.set(null);
+    this.searchQuery.set('');
+    this.minPrice.set(null);
+    this.maxPrice.set(null);
+    this.fetchProducts();
   }
 
   protected async onAddToCart(productId: string) {
@@ -63,4 +135,5 @@ export class App implements OnInit {
     this.authState.logout();
   }
 }
+
 
