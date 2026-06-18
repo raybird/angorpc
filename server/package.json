@@ -1,12 +1,13 @@
 {
   "name": "angorpc-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "Express + oRPC Backend for AngoRPC",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "nodemon src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },
@@ -28,6 +29,7 @@
     "nodemon": "^3.1.4",
     "prisma": "^5.15.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
     "typescript": "^5.5.4"
   }
 }
