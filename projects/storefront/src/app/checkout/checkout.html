@@ -172,10 +172,59 @@
 
               <div class="summary-divider"></div>
 
+              <!-- 優惠碼輸入區 -->
+              <div class="coupon-section">
+                <label for="couponInput">🎟️ 使用優惠券</label>
+                <div class="coupon-input-group">
+                  <input 
+                    id="couponInput" 
+                    type="text" 
+                    [value]="couponCodeInput()" 
+                    (input)="couponCodeInput.set($any($event.target).value)" 
+                    placeholder="請輸入優惠碼"
+                    [disabled]="appliedCoupon() !== null || isApplyingCoupon()"
+                  />
+                  @if (appliedCoupon()) {
+                    <button type="button" class="btn-coupon-action remove" (click)="removeCoupon()">取消</button>
+                  } @else {
+                    <button 
+                      type="button" 
+                      class="btn-coupon-action apply" 
+                      (click)="applyCoupon()" 
+                      [disabled]="isApplyingCoupon() || !couponCodeInput().trim()"
+                    >
+                      @if (isApplyingCoupon()) {
+                        <span>...</span>
+                      } @else {
+                        <span>套用</span>
+                      }
+                    </button>
+                  }
+                </div>
+                @if (couponError()) {
+                  <span class="coupon-msg error">{{ couponError() }}</span>
+                }
+                @if (couponSuccess()) {
+                  <span class="coupon-msg success">
+                    {{ couponSuccess() }}
+                  </span>
+                }
+              </div>
+
+              <div class="summary-divider"></div>
+
               <div class="summary-row">
                 <span>小計</span>
-                <span>${{ cartState.totalPrice() | number:'1.2-2' }}</span>
+                <span>${{ subtotalAmount() | number:'1.2-2' }}</span>
               </div>
+              @if (appliedCoupon()) {
+                <div class="summary-row discount-row">
+                  <span class="discount-label">
+                    🏷️ 優惠券折抵 ({{ appliedCoupon().code }})
+                  </span>
+                  <span class="discount-value">-${{ discountAmount() | number:'1.2-2' }}</span>
+                </div>
+              }
               <div class="summary-row">
                 <span>運費</span>
                 <span class="free-shipping">免運費</span>
@@ -185,7 +234,7 @@
 
               <div class="summary-row total-row">
                 <span>應付總額</span>
-                <span class="total-price">${{ cartState.totalPrice() | number:'1.2-2' }}</span>
+                <span class="total-price">${{ finalAmount() | number:'1.2-2' }}</span>
               </div>
 
               <button type="submit" class="btn-checkout" [disabled]="isLoading() || cartState.cartItems().length === 0">

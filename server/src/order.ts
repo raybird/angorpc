@@ -48,6 +48,41 @@ export const createOrder = os
         totalAmount += Number(product.price) * item.quantity;
       }
 
+      // 2.1 驗證並計算優惠券折扣
+      let discountAmount = 0;
+      let couponId: string | undefined = undefined;
+
+      if (input.couponCode) {
+        const coupon = await tx.coupon.findUnique({
+          where: { code: input.couponCode },
+        });
+
+        if (!coupon || !coupon.isActive) {
+          throw new Error('INVALID_COUPON');
+        }
+
+        if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+          throw new Error('COUPON_EXPIRED');
+        }
+
+        if (totalAmount < Number(coupon.minSpend)) {
+          throw new Error('COUPON_MIN_SPEND_NOT_MET');
+        }
+
+        couponId = coupon.id;
+        const value = Number(coupon.value);
+        if (coupon.discountType === 'PERCENTAGE') {
+          discountAmount = totalAmount * (value / 100);
+        } else if (coupon.discountType === 'FIXED_AMOUNT') {
+          discountAmount = value;
+        }
+
+        // 折扣上限為商品小計
+        discountAmount = Math.min(discountAmount, totalAmount);
+      }
+
+      const finalAmount = totalAmount - discountAmount;
+
       // 3. 扣減庫存 (使用 gte 條件保障併發安全與樂觀鎖版本自增)
       for (const item of input.items) {
         try {
@@ -71,7 +106,9 @@ export const createOrder = os
       const order = await tx.order.create({
         data: {
           userId,
-          totalAmount,
+          totalAmount: finalAmount,
+          discountAmount,
+          couponId,
           status: 'PENDING',
           shippingAddress: input.shippingAddress,
           billingAddress: input.billingAddress,
@@ -176,6 +213,7 @@ export const getOrderById = os
             product: true,
           },
         },
+        coupon: true,
       },
     });
 
@@ -204,6 +242,8 @@ export const getOrderById = os
       id: order.id,
       userId: order.userId,
       totalAmount: Number(order.totalAmount),
+      discountAmount: Number(order.discountAmount),
+      couponCode: order.coupon?.code || null,
       status: order.status,
       shippingAddress: {
         recipientName: shippingAddress.recipientName || '',

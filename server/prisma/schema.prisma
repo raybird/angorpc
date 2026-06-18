@@ -98,6 +98,8 @@ model Order {
   id              String      @id @default(uuid()) @db.Uuid
   userId          String      @map("user_id") @db.Uuid
   totalAmount     Decimal     @map("total_amount") @db.Decimal(10, 2)
+  discountAmount  Decimal     @default(0.00) @map("discount_amount") @db.Decimal(10, 2)
+  couponId        String?     @map("coupon_id") @db.Uuid
   status          OrderStatus @default(PENDING)
   shippingAddress Json        @map("shipping_address")
   billingAddress  Json        @map("billing_address")
@@ -106,6 +108,7 @@ model Order {
 
   // 關係定義
   user            User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  coupon          Coupon?     @relation(fields: [couponId], references: [id], onDelete: Restrict)
   orderItems      OrderItem[]
 
   // 索引設計：優化使用者查詢自身訂單以及按時間排序的效能
@@ -120,6 +123,29 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   REFUNDED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+/// 優惠券實體
+model Coupon {
+  id           String       @id @default(uuid()) @db.Uuid
+  code         String       @unique @db.VarChar(50)
+  discountType DiscountType @map("discount_type")
+  value        Decimal      @db.Decimal(10, 2)
+  minSpend     Decimal      @default(0.00) @map("min_spend") @db.Decimal(10, 2)
+  isActive     Boolean      @default(true) @map("is_active")
+  expiresAt    DateTime?    @map("expires_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  // 關係定義
+  orders       Order[]
+
+  @@map("coupons")
 }
 
 /// 訂單商品明細實體

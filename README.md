@@ -111,3 +111,25 @@ npx ng test --watch=false
 *   [前端 UI 與狀態路由規格書](file:///home/raybird/Documents/RCodes/angorpc/docs/architecture/ui-and-state-flow.md)
 *   [資料庫詳細設計規格書](file:///home/raybird/Documents/RCodes/angorpc/docs/architecture/database-design.md)
 *   [前後台劃分與未來擴展規劃](file:///home/raybird/Documents/RCodes/angorpc/docs/architecture/storefront-admin-division.md)
+
+---
+
+## 7. 專案開發狀態與進度 (Development Status & Roadmap)
+
+目前專案的各模組實作現況如下：
+
+### 7.1 前台 Storefront (消費者端)
+*   **首頁與商品目錄**：支援響應式 UI、分類篩選與動態關鍵字搜尋。
+*   **商品詳細頁 (`/products/:slug`)**：雙欄玻璃擬態設計，支援骨架屏 (Skeleton Screen) 載入動畫、動態數量加減與庫存警示。
+*   **購物車管理與結帳導航**：以 Angular Signals 全域管理購物車狀態，支援數量加減與流暢的結帳填寫與確認導航。
+*   **SSR 路由優化**：動態路由透過配置 `RenderMode.Server` 於伺服器端渲染 (SSR) 執行，兼顧動態內容與 SEO。
+*   **單元測試**：累積 18 個單元測試（包含元件與 state 服務）已全數成功通過。
+
+### 7.2 後端 Express + oRPC
+*   **API 服務**：透過 oRPC 實現極致的端到端類型安全 (End-to-End Type Safety)，與前端共享 Zod v4 Schemas 驗證。
+*   **資料庫事務與併發控制**：下單流程（建立訂單、扣減庫存、清除購物車）使用 Prisma `$transaction` 保障原子性；扣庫存採用樂觀鎖自增 `version` 機制防範超賣，並於 2026年06月19日 完成測試修復。
+
+### 7.3 開發中與下一步規劃
+*   **優惠券與折扣系統 (Coupon & Discount)**：目前進入規劃與實作階段，包含資料庫 schema 擴充、Zod 驗證與結帳折扣聯動。
+*   **後台 Admin Portal 基礎建設**：待優惠券系統完成後啟動。
+

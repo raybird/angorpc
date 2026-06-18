@@ -166,6 +166,7 @@ export const CreateOrderInputSchema = z.object({
         productId: z.string().uuid(),
         quantity: z.number().int().positive()
     })).min(1, "購物車至少需包含一項商品"),
+    couponCode: z.string().optional(),
 });
 // 建立訂單輸出 Schema
 export const CreateOrderOutputSchema = z.object({
@@ -173,6 +174,34 @@ export const CreateOrderOutputSchema = z.object({
     totalAmount: z.number(),
     status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
     createdAt: z.date().or(z.string()),
+});
+// 優惠券主要 Schema 結構
+export const CouponSchema = z.object({
+    id: z.string().uuid(),
+    code: z.string(),
+    discountType: z.enum(['PERCENTAGE', 'FIXED_AMOUNT']),
+    value: z.number(),
+    minSpend: z.number(),
+    isActive: z.boolean(),
+    expiresAt: z.date().or(z.string()).nullable(),
+});
+// 驗證優惠碼輸入 Schema
+export const ValidateCouponInputSchema = z.object({
+    code: z.string().min(1, "優惠碼不能為空"),
+    orderAmount: z.number().nonnegative(),
+});
+// 驗證優惠碼輸出 Schema
+export const ValidateCouponOutputSchema = z.object({
+    valid: z.boolean(),
+    error: z.string().optional(),
+    coupon: z.object({
+        id: z.string().uuid(),
+        code: z.string(),
+        discountType: z.enum(['PERCENTAGE', 'FIXED_AMOUNT']),
+        value: z.number(),
+        minSpend: z.number(),
+    }).optional(),
+    discountAmount: z.number().optional(),
 });
 // 查詢歷史訂單輸入 Schema
 export const GetOrdersInputSchema = z.object({
@@ -200,6 +229,8 @@ export const OrderDetailOutputSchema = z.object({
     id: z.string().uuid(),
     userId: z.string().uuid(),
     totalAmount: z.number(),
+    discountAmount: z.number().optional(),
+    couponCode: z.string().nullable().optional(),
     status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
     shippingAddress: AddressSchema,
     billingAddress: AddressSchema,

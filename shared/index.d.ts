@@ -206,6 +206,7 @@ export declare const CreateOrderInputSchema: z.ZodObject<{
         productId: z.ZodString;
         quantity: z.ZodNumber;
     }, z.core.$strip>>;
+    couponCode: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 export declare const CreateOrderOutputSchema: z.ZodObject<{
     orderId: z.ZodString;
@@ -219,6 +220,37 @@ export declare const CreateOrderOutputSchema: z.ZodObject<{
         REFUNDED: "REFUNDED";
     }>;
     createdAt: z.ZodUnion<[z.ZodDate, z.ZodString]>;
+}, z.core.$strip>;
+export declare const CouponSchema: z.ZodObject<{
+    id: z.ZodString;
+    code: z.ZodString;
+    discountType: z.ZodEnum<{
+        PERCENTAGE: "PERCENTAGE";
+        FIXED_AMOUNT: "FIXED_AMOUNT";
+    }>;
+    value: z.ZodNumber;
+    minSpend: z.ZodNumber;
+    isActive: z.ZodBoolean;
+    expiresAt: z.ZodNullable<z.ZodUnion<[z.ZodDate, z.ZodString]>>;
+}, z.core.$strip>;
+export declare const ValidateCouponInputSchema: z.ZodObject<{
+    code: z.ZodString;
+    orderAmount: z.ZodNumber;
+}, z.core.$strip>;
+export declare const ValidateCouponOutputSchema: z.ZodObject<{
+    valid: z.ZodBoolean;
+    error: z.ZodOptional<z.ZodString>;
+    coupon: z.ZodOptional<z.ZodObject<{
+        id: z.ZodString;
+        code: z.ZodString;
+        discountType: z.ZodEnum<{
+            PERCENTAGE: "PERCENTAGE";
+            FIXED_AMOUNT: "FIXED_AMOUNT";
+        }>;
+        value: z.ZodNumber;
+        minSpend: z.ZodNumber;
+    }, z.core.$strip>>;
+    discountAmount: z.ZodOptional<z.ZodNumber>;
 }, z.core.$strip>;
 export declare const GetOrdersInputSchema: z.ZodObject<{
     page: z.ZodDefault<z.ZodNumber>;
@@ -257,6 +289,8 @@ export declare const OrderDetailOutputSchema: z.ZodObject<{
     id: z.ZodString;
     userId: z.ZodString;
     totalAmount: z.ZodNumber;
+    discountAmount: z.ZodOptional<z.ZodNumber>;
+    couponCode: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     status: z.ZodEnum<{
         PENDING: "PENDING";
         PAID: "PAID";

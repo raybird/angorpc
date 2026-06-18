@@ -72,6 +72,14 @@ export interface Category {
   slug: string;
 }
 
+export interface Coupon {
+  id: string;
+  code: string;
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  value: number;
+  minSpend: number;
+}
+
 export interface AppRouterClient {
   hello: (input: { name: string }) => Promise<{ message: string; timestamp: string }>;
   user: {
@@ -122,6 +130,7 @@ export interface AppRouterClient {
       shippingAddress: Address;
       billingAddress: Address;
       items: { productId: string; quantity: number }[];
+      couponCode?: string;
     }) => Promise<{
       orderId: string;
       totalAmount: number;
@@ -142,6 +151,17 @@ export interface AppRouterClient {
       };
     }>;
     getOrderById: (input: { id: string }) => Promise<OrderDetail>;
+  };
+  coupon: {
+    validateCoupon: (input: {
+      code: string;
+      orderAmount: number;
+    }) => Promise<{
+      valid: boolean;
+      error?: string;
+      coupon?: Coupon;
+      discountAmount?: number;
+    }>;
   };
 }
 
