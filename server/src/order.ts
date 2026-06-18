@@ -48,7 +48,7 @@ export const createOrder = os
         totalAmount += Number(product.price) * item.quantity;
       }
 
-      // 3. 扣減庫存 (使用 gte 條件保障併發安全)
+      // 3. 扣減庫存 (使用 gte 條件保障併發安全與樂觀鎖版本自增)
       for (const item of input.items) {
         try {
           await tx.product.update({
@@ -58,6 +58,7 @@ export const createOrder = os
             },
             data: {
               stock: { decrement: item.quantity },
+              version: { increment: 1 }, // 自增版本以利樂觀鎖防護
             },
           });
         } catch (err) {
