@@ -11,7 +11,7 @@ docs/
 ├── README.md                 # 文件首頁
 ├── architecture/             # 技術架構文件
 │   ├── overview.md          # 整體架構概述
-│   ├── angular20-features.md # Angular 20 新特性
+│   ├── angular22-features.md # Angular 22 新特性
 │   ├── angular-ssr-explanation.md # Angular SSR 與 Universal 說明
 │   ├── orpc-adapters-analysis.md # oRPC Adapters 分析
 │   ├── ssr-orpc-integration.md # SSR 與 ORPC 整合架構
@@ -39,7 +39,7 @@ docs/
 
 - [專案概述](./overview.md) - 了解專案目標和技術選型
 - [技術架構](./architecture/overview.md) - 深入了解系統架構
-- [Angular 20 特性](./architecture/angular20-features.md) - Angular 20 新功能說明
+- [Angular 22 特性](./architecture/angular22-features.md) - Angular 22 新功能說明
 - [Angular SSR 說明](./architecture/angular-ssr-explanation.md) - SSR 與 Universal 的關係
 - [oRPC Adapters 分析](./architecture/orpc-adapters-analysis.md) - oRPC 適配器詳細分析
 - [SSR 與 ORPC 整合](./architecture/ssr-orpc-integration.md) - 統一伺服器架構設計
@@ -48,7 +48,7 @@ docs/
 
 ## 技術棧
 
-- **前端**: Angular 20 with SSR (@angular/ssr)
+- **前端**: Angular 22 with SSR (@angular/ssr)
 - **後端**: Node.js with ORPC
 - **類型安全**: TypeScript (全端共享)
 - **資料庫**: 待定

@@ -1,0 +1,11 @@
+# BMAD 工具檔案
+.bmad-core/
+.bmad-creative-writing/
+.cursor/
+
+# 其他常見忽略檔案
+node_modules/
+dist/
+*.log
+.env.local
+

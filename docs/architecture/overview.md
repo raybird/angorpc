@@ -2,7 +2,7 @@
 
 ## 整體架構設計
 
-AngoRPC 採用前後端分離的架構，透過 ORPC 實現類型安全的通信。
+AngoRPC 採用前後端分離的架構，透過 [oRPC](https://github.com/middleapi/orpc) 實現類型安全的通信。
 
 ## 系統架構圖
 
@@ -39,12 +39,12 @@ graph TB
 
 #### Angular Universal (SSR)
 - **職責**: 服務端渲染、首屏優化
-- **技術**: Angular 20, Universal
+- **技術**: Angular 22, Universal
 - **特點**: SEO 友善、快速載入
 
-#### ORPC Client
+#### oRPC Client
 - **職責**: 與後端 API 通信
-- **技術**: ORPC TypeScript Client
+- **技術**: [oRPC](https://github.com/middleapi/orpc) TypeScript Client
 - **特點**: 類型安全、自動生成
 
 #### 狀態管理
@@ -54,9 +54,9 @@ graph TB
 
 ### 後端組件
 
-#### ORPC Server
+#### oRPC Server
 - **職責**: API 服務提供
-- **技術**: ORPC Node.js Server
+- **技術**: [oRPC](https://github.com/middleapi/orpc) Node.js Server
 - **特點**: 類型安全、高效能
 
 #### 業務邏輯層
@@ -75,7 +75,7 @@ graph TB
 ```
 1. 用戶請求頁面
 2. Angular Universal 在服務端渲染
-3. 呼叫 ORPC 獲取初始資料
+3. 呼叫 [oRPC](https://github.com/middleapi/orpc) 獲取初始資料
 4. 生成完整 HTML 返回
 ```
 
@@ -83,14 +83,14 @@ graph TB
 ```
 1. 瀏覽器載入 JavaScript
 2. Angular 接管頁面
-3. ORPC Client 建立連接
+3. oRPC Client 建立連接
 4. 狀態同步完成
 ```
 
 ### 3. 後續互動
 ```
 1. 用戶操作觸發事件
-2. ORPC Client 發送 RPC 請求
+2. oRPC Client 發送 RPC 請求
 3. 後端處理並返回結果
 4. 前端更新 UI
 ```
@@ -100,7 +100,7 @@ graph TB
 ### 類型定義流程
 ```
 1. 定義共享 TypeScript 類型
-2. ORPC 自動生成 API 合約
+2. [oRPC](https://github.com/middleapi/orpc) 自動生成 API 合約
 3. 前後端使用相同類型定義
 4. 編譯時類型檢查
 ```
@@ -108,7 +108,7 @@ graph TB
 ### 錯誤處理流程
 ```
 1. 後端拋出結構化錯誤
-2. ORPC 序列化錯誤資訊
+2. [oRPC](https://github.com/middleapi/orpc) 序列化錯誤資訊
 3. 前端接收並處理錯誤
 4. 統一的錯誤顯示機制
 ```
@@ -163,4 +163,4 @@ graph TB
 
 ---
 
-最後更新：2025年10月26日
+最後更新：2026年06-18

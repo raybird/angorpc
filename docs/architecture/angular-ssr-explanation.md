@@ -9,7 +9,7 @@
 
 ### 整合到 Angular 核心
 - **Angular 17+**: Angular CLI 開始內建 SSR 支援
-- **Angular 20**: 完全整合到 `@angular/ssr` 套件中
+- **Angular 22**: 完全整合到 `@angular/ssr` 套件中
 - 不再需要單獨安裝 Angular Universal 相關套件
 
 ## 技術演進
@@ -28,7 +28,7 @@ npm install express
 ng add @angular/ssr
 ```
 
-## Angular 20 中的 SSR
+## Angular 22 中的 SSR
 
 ### 套件結構
 ```
@@ -71,8 +71,8 @@ ng add @angular/ssr
   "name": "angorpc",
   "version": "1.0.0",
   "dependencies": {
-    "@angular/core": "^20.0.0",
-    "@angular/ssr": "^20.0.0"  // 使用新的 SSR 套件
+    "@angular/core": "^22.0.0",
+    "@angular/ssr": "^22.0.0"  // 使用新的 SSR 套件
   }
 }
 ```
@@ -97,10 +97,10 @@ ng build --ssr
 ### ❌ 錯誤理解
 - "需要額外安裝 Angular Universal"
 - "Universal 是獨立的第三方套件"
-- "Angular 20 不支援 SSR"
+- "Angular 22 不支援 SSR"
 
 ### ✅ 正確理解
-- Angular 20 內建 SSR 支援
+- Angular 22 內建 SSR 支援
 - 使用 `@angular/ssr` 套件即可
 - Universal 是官方 SSR 解決方案的品牌名稱
 
@@ -150,10 +150,10 @@ ng build --ssr
 ## 總結
 
 - **Angular Universal** 是官方 SSR 解決方案的品牌名稱
-- **Angular 20** 使用 `@angular/ssr` 套件實現 SSR 功能
-- **Universal** 一詞代表「通用」的概念，強調同一份代碼在瀏覽器和伺服器上運行
-- 在技術文檔中，我們可以說「Angular 20 with SSR」或「Angular 20 with Universal SSR」
+- **Angular 22** 使用 `@angular/ssr` 套件實現 SSR 功能
+- **Universal** 一詞代表「通用」的概念，強調同一份代碼在瀏覽器與伺服器上運行
+- 在技術文檔中，我們可以說「Angular 22 with SSR」或「Angular 22 with Universal SSR」
 
 ---
 
-最後更新：2025年10月26日
+最後更新：2026年06-18

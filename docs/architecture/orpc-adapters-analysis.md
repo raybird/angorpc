@@ -2,7 +2,7 @@
 
 ## oRPC 概述
 
-根據 [oRPC GitHub 儲存庫](https://github.com/unnoq/orpc) 的資訊，oRPC 是一個強大的 RPC 和 OpenAPI 組合，提供端到端類型安全的 API 開發體驗。
+根據 [oRPC GitHub 儲存庫](https://github.com/middleapi/orpc) 的資訊，oRPC 是一個強大的 RPC 和 OpenAPI 組合，提供端到端類型安全的 API 開發體驗。
 
 ### 核心特性
 - 🔗 **端到端類型安全**: 確保從客戶端到伺服器的類型安全
@@ -333,4 +333,4 @@ oRPC 提供了強大的適配器系統，特別適合與 Angular SSR 整合：
 
 ---
 
-最後更新：2025年10月26日
+最後更新：2026年06-18
