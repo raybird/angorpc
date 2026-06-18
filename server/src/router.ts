@@ -3,6 +3,7 @@ import { os } from '@orpc/server';
 import { HelloInputSchema, HelloOutputSchema } from '../../shared/index.js';
 import { userRouter } from './user.js';
 import { productRouter } from './product.js';
+import { cartRouter } from './cart.js';
 
 export const hello = os
   .input(HelloInputSchema)
@@ -18,7 +19,9 @@ export const appRouter = {
   hello,
   user: userRouter,
   product: productRouter,
+  cart: cartRouter,
 };
 
 // Export router type for the frontend
 export type AppRouter = typeof appRouter;
+

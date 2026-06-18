@@ -133,3 +133,38 @@ export const UpdateProductInputSchema = z.object({
   stock: z.number().int().nonnegative().optional(),
   isActive: z.boolean().optional(),
 });
+
+// 購物車項目詳細 Schema
+export const CartItemSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  productId: z.string().uuid(),
+  quantity: z.number().int().positive(),
+  createdAt: z.date().or(z.string()),
+  updatedAt: z.date().or(z.string()),
+  product: ProductSchema,
+});
+
+// 新增商品至購物車輸入 Schema
+export const AddCartItemInputSchema = z.object({
+  productId: z.string().uuid("不合法的商品 ID 格式"),
+  quantity: z.number().int().positive("商品數量必須大於 0").default(1),
+});
+
+// 更新購物車商品數量輸入 Schema
+export const UpdateCartItemInputSchema = z.object({
+  productId: z.string().uuid("不合法的商品 ID 格式"),
+  quantity: z.number().int().positive("商品數量必須大於 0"),
+});
+
+// 移除購物車商品輸入 Schema
+export const RemoveCartItemInputSchema = z.object({
+  productId: z.string().uuid("不合法的商品 ID 格式"),
+});
+
+// 查詢購物車輸出 Schema
+export const GetCartOutputSchema = z.object({
+  items: z.array(CartItemSchema),
+  totalPrice: z.number(),
+});
+

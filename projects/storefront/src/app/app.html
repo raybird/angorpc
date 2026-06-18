@@ -11,6 +11,12 @@
       </a>
       
       <div class="nav-actions">
+        <a routerLink="/cart" class="cart-nav-btn" title="查看購物車">
+          <span class="cart-icon">🛒</span>
+          @if (isAuthenticated() && cartCount() > 0) {
+            <span class="cart-badge">{{ cartCount() }}</span>
+          }
+        </a>
         @if (isAuthenticated()) {
           <span class="user-welcome">👋 歡迎您，{{ currentUser()?.lastName }}{{ currentUser()?.firstName }}</span>
           <button class="btn-outline" (click)="handleLogout()">登出</button>
@@ -93,7 +99,7 @@
                   </div>
 
                   <div class="card-actions">
-                    <button class="btn-add-cart">🛒 加入購物車</button>
+                    <button class="btn-add-cart" (click)="onAddToCart(product.id)">🛒 加入購物車</button>
                   </div>
                 </div>
               </article>
@@ -530,6 +536,52 @@
     }
     .product-grid {
       grid-template-columns: 1fr;
+    }
+  }
+
+  .cart-nav-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    text-decoration: none;
+    color: #ffffff;
+    transition: all 0.2s ease;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.35);
+      color: #a5b4fc;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    .cart-icon {
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.4rem;
+      border-radius: 99px;
+      line-height: 1;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
     }
   }
 </style>

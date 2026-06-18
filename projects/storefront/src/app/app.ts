@@ -1,7 +1,7 @@
 import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { OrpcClientService, AuthStateService, Product } from 'shared-lib';
+import { OrpcClientService, AuthStateService, Product, CartStateService } from 'shared-lib';
 
 @Component({
   selector: 'app-root',
@@ -18,10 +18,12 @@ export class App implements OnInit {
 
   private orpc = inject(OrpcClientService);
   private authState = inject(AuthStateService);
+  private cartState = inject(CartStateService);
 
   // Sync member session with storefront landing page
   protected readonly currentUser = this.authState.currentUser;
   protected readonly isAuthenticated = this.authState.isAuthenticated;
+  protected readonly cartCount = this.cartState.cartCount;
 
   async ngOnInit() {
     await this.fetchProducts();
@@ -44,7 +46,21 @@ export class App implements OnInit {
     }
   }
 
+  protected async onAddToCart(productId: string) {
+    if (!this.isAuthenticated()) {
+      alert('請先登入會員以使用購物車！');
+      return;
+    }
+    try {
+      await this.cartState.addItem(productId, 1);
+      alert('商品已成功加入購物車！');
+    } catch (err) {
+      alert('加入購物車失敗，可能已超出商品庫存上限！');
+    }
+  }
+
   protected handleLogout() {
     this.authState.logout();
   }
 }
+

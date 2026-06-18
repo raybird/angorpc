@@ -22,6 +22,16 @@ export interface Product {
   createdAt: string | Date;
 }
 
+export interface CartItem {
+  id: string;
+  userId: string;
+  productId: string;
+  quantity: number;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  product: Product;
+}
+
 export interface AppRouterClient {
   hello: (input: { name: string }) => Promise<{ message: string; timestamp: string }>;
   user: {
@@ -57,6 +67,12 @@ export interface AppRouterClient {
       };
       updatedAt: string | Date;
     }>;
+  };
+  cart: {
+    getCart: () => Promise<{ items: CartItem[]; totalPrice: number }>;
+    addItem: (input: { productId: string; quantity?: number }) => Promise<{ items: CartItem[]; totalPrice: number }>;
+    updateItem: (input: { productId: string; quantity: number }) => Promise<{ items: CartItem[]; totalPrice: number }>;
+    removeItem: (input: { productId: string }) => Promise<{ items: CartItem[]; totalPrice: number }>;
   };
 }
 
