@@ -1,0 +1,185 @@
+<div class="users-container">
+  <!-- 頁面標題 -->
+  <div class="page-header">
+    <div class="title-section">
+      <h1>平台會員與權限管理</h1>
+      <p>檢視全平台註冊用戶、調整管理員與會員角色權限，並可深入分析個別用戶的累計消費統計。</p>
+    </div>
+  </div>
+
+  <!-- 搜尋與篩選列 -->
+  <div class="filters-card">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        placeholder="搜尋信箱或會員姓名..." 
+        [value]="searchQuery()" 
+        (input)="onSearch($event)"
+      />
+    </div>
+
+    <div class="filter-actions">
+      <div class="select-wrapper">
+        <select [value]="selectedRole()" (change)="onRoleFilterChange($event)">
+          <option value="ALL">全部權限角色</option>
+          <option value="USER">一般會員 (User)</option>
+          <option value="ADMIN">管理員 (Admin)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 數據載入狀態 -->
+  <div class="loading-state" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>正在加載註冊會員數據，請稍後...</p>
+  </div>
+
+  <!-- 空狀態 -->
+  <div class="empty-state" *ngIf="!isLoading() && users().length === 0">
+    <div class="empty-icon">👥</div>
+    <h3>找不到任何會員</h3>
+    <p>沒有符合條件的會員註冊紀錄。</p>
+  </div>
+
+  <!-- 用戶數據表 -->
+  <div class="table-container" *ngIf="!isLoading() && users().length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>會員姓名</th>
+          <th>電子郵件</th>
+          <th>聯絡電話</th>
+          <th>註冊日期</th>
+          <th>權限角色</th>
+          <th class="text-right">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users()" [class.self-row]="authState.currentUser()?.id === user.id">
+          <td class="name-cell">
+            <span class="full-name">
+              {{ (user.lastName || user.firstName) ? (user.lastName || '') + ' ' + (user.firstName || '') : '未填寫姓名' }}
+            </span>
+            <span class="self-badge" *ngIf="authState.currentUser()?.id === user.id">目前登入的帳戶</span>
+          </td>
+          <td class="email-cell">{{ user.email }}</td>
+          <td>{{ user.phone || '無' }}</td>
+          <td>
+            <span class="register-date">{{ user.createdAt | date:'yyyy-MM-dd' }}</span>
+          </td>
+          <td>
+            <!-- 自己的帳戶不能修改權限角色以防自我降權，非自己的帳戶可使用 select 切換 -->
+            @if (authState.currentUser()?.id === user.id) {
+              <span class="badge badge-admin-glowing">ADMIN (本帳戶)</span>
+            } @else {
+              <div class="select-wrapper select-role">
+                <select [value]="user.role" (change)="changeUserRole(user, $event)" [disabled]="isUpdatingRole()">
+                  <option value="USER">一般會員 (User)</option>
+                  <option value="ADMIN">管理員 (Admin)</option>
+                </select>
+              </div>
+            }
+          </td>
+          <td class="actions-cell text-right">
+            <button class="btn-icon" (click)="viewUserDetail(user)" title="查看消費統計">
+              📊 消費分析
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 分頁導航 -->
+    <div class="pagination">
+      <span class="page-info">
+        第 <strong>{{ page() }}</strong> 頁，共 {{ totalPages() }} 頁
+      </span>
+      <div class="pagination-buttons">
+        <button [disabled]="page() === 1" (click)="changePage(-1)" class="btn-page">◀ 上一頁</button>
+        <button [disabled]="page() === totalPages()" (click)="changePage(1)" class="btn-page">下一頁 ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 用戶消費數據統計 Modal -->
+<div class="modal-overlay" *ngIf="isModalOpen()" (click)="closeModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>會員消費統計分析</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <!-- 載入統計中 -->
+    <div class="modal-loading" *ngIf="isLoadingStats()">
+      <div class="spinner"></div>
+      <p>正在演算消費數據統計，請稍後...</p>
+    </div>
+
+    <!-- 載入失敗錯誤 -->
+    <div class="error-banner" *ngIf="!isLoadingStats() && errorMessage()">
+      ⚠️ {{ errorMessage() }}
+    </div>
+
+    <!-- 統計詳情內容 -->
+    <div class="modal-body" *ngIf="!isLoadingStats() && selectedUser()">
+      <div class="user-detail-layout">
+        <!-- 基本欄位卡 -->
+        <div class="profile-card card-glass">
+          <h3>👤 會員帳戶資訊</h3>
+          <div class="info-list">
+            <div class="info-item">
+              <span class="info-lbl">會員識別碼:</span>
+              <span class="info-val monospace">{{ selectedUser().id }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-lbl">姓名:</span>
+              <span class="info-val">{{ (selectedUser().lastName || selectedUser().firstName) ? (selectedUser().lastName || '') + ' ' + (selectedUser().firstName || '') : '未填寫姓名' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-lbl">登入信箱:</span>
+              <span class="info-val">{{ selectedUser().email }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-lbl">聯絡電話:</span>
+              <span class="info-val">{{ selectedUser().phone || '無' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-lbl">註冊日期:</span>
+              <span class="info-val">{{ selectedUser().createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 營運統計 -->
+        <div class="stats-section" *ngIf="selectedUserStats()">
+          <h3>💰 營運消費統計</h3>
+          <div class="stats-grid">
+            <div class="stat-box order-stat-box">
+              <span class="stat-icon">🛍️</span>
+              <div class="stat-info">
+                <span class="stat-val">{{ selectedUserStats()?.totalOrders }} 筆</span>
+                <span class="stat-label">累計訂單總數</span>
+              </div>
+            </div>
+
+            <div class="stat-box spent-stat-box">
+              <span class="stat-icon">💳</span>
+              <div class="stat-info">
+                <span class="stat-val spent">${{ selectedUserStats()?.totalSpent | number:'1.2-2' }}</span>
+                <span class="stat-label">累計消費總金額</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部 -->
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">關閉分析</button>
+    </div>
+  </div>
+</div>

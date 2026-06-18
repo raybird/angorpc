@@ -37,6 +37,13 @@
           <span class="menu-label">優惠券管理</span>
         }
       </a>
+
+      <a routerLink="users" routerLinkActive="active" class="menu-item">
+        <span class="menu-icon">👥</span>
+        @if (!isSidebarCollapsed()) {
+          <span class="menu-label">用戶管理</span>
+        }
+      </a>
     </nav>
 
     <div class="sidebar-footer">

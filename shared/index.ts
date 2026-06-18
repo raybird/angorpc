@@ -341,4 +341,43 @@ export const UpdateOrderStatusInputSchema = z.object({
   status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
 });
 
+// 查詢用戶列表輸入 Schema
+export const GetUsersInputSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(20),
+  search: z.string().optional(),
+  role: z.enum(["USER", "ADMIN"]).optional(),
+});
+
+// 查詢用戶列表輸出 Schema
+export const GetUsersOutputSchema = z.object({
+  users: z.array(z.object({
+    id: z.string().uuid(),
+    email: z.string().email(),
+    firstName: z.string().nullable(),
+    lastName: z.string().nullable(),
+    phone: z.string().nullable(),
+    role: z.enum(["USER", "ADMIN"]),
+    createdAt: z.date().or(z.string()),
+  })),
+  pagination: z.object({
+    page: z.number(),
+    limit: z.number(),
+    total: z.number(),
+    totalPages: z.number(),
+  }),
+});
+
+// 更新用戶角色輸入 Schema
+export const UpdateUserRoleInputSchema = z.object({
+  id: z.string().uuid("不合法的用戶 ID 格式"),
+  role: z.enum(["USER", "ADMIN"]),
+});
+
+// 用戶統計數據輸出 Schema
+export const UserStatsOutputSchema = z.object({
+  totalOrders: z.number(),
+  totalSpent: z.number(),
+});
+
 

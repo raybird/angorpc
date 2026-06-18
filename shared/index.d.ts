@@ -386,3 +386,43 @@ export declare const UpdateOrderStatusInputSchema: z.ZodObject<{
         REFUNDED: "REFUNDED";
     }>;
 }, z.core.$strip>;
+export declare const GetUsersInputSchema: z.ZodObject<{
+    page: z.ZodDefault<z.ZodNumber>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    search: z.ZodOptional<z.ZodString>;
+    role: z.ZodOptional<z.ZodEnum<{
+        USER: "USER";
+        ADMIN: "ADMIN";
+    }>>;
+}, z.core.$strip>;
+export declare const GetUsersOutputSchema: z.ZodObject<{
+    users: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        email: z.ZodString;
+        firstName: z.ZodNullable<z.ZodString>;
+        lastName: z.ZodNullable<z.ZodString>;
+        phone: z.ZodNullable<z.ZodString>;
+        role: z.ZodEnum<{
+            USER: "USER";
+            ADMIN: "ADMIN";
+        }>;
+        createdAt: z.ZodUnion<[z.ZodDate, z.ZodString]>;
+    }, z.core.$strip>>;
+    pagination: z.ZodObject<{
+        page: z.ZodNumber;
+        limit: z.ZodNumber;
+        total: z.ZodNumber;
+        totalPages: z.ZodNumber;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+export declare const UpdateUserRoleInputSchema: z.ZodObject<{
+    id: z.ZodString;
+    role: z.ZodEnum<{
+        USER: "USER";
+        ADMIN: "ADMIN";
+    }>;
+}, z.core.$strip>;
+export declare const UserStatsOutputSchema: z.ZodObject<{
+    totalOrders: z.ZodNumber;
+    totalSpent: z.ZodNumber;
+}, z.core.$strip>;

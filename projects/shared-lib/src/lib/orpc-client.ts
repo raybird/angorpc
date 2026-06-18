@@ -90,6 +90,28 @@ export interface AppRouterClient {
     register: (input: any) => Promise<{ token: string; user: User }>;
     login: (input: any) => Promise<{ token: string; user: User }>;
     getProfile: () => Promise<User & { createdAt: string | Date }>;
+    getUsers: (input: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      role?: 'USER' | 'ADMIN';
+    }) => Promise<{
+      users: (User & { createdAt: string | Date })[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }>;
+    updateUserRole: (input: {
+      id: string;
+      role: 'USER' | 'ADMIN';
+    }) => Promise<User & { createdAt: string | Date }>;
+    getUserStats: (input: { id: string }) => Promise<{
+      totalOrders: number;
+      totalSpent: number;
+    }>;
   };
   product: {
     getProducts: (input: {

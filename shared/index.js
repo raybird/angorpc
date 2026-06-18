@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateOrderStatusInputSchema = exports.GetCategoriesOutputSchema = exports.OrderDetailOutputSchema = exports.GetOrdersOutputSchema = exports.GetOrdersInputSchema = exports.UpdateCouponInputSchema = exports.CreateCouponInputSchema = exports.GetCouponsOutputSchema = exports.GetCouponsInputSchema = exports.ValidateCouponOutputSchema = exports.ValidateCouponInputSchema = exports.CouponSchema = exports.CreateOrderOutputSchema = exports.CreateOrderInputSchema = exports.AddressSchema = exports.GetCartOutputSchema = exports.RemoveCartItemInputSchema = exports.UpdateCartItemInputSchema = exports.AddCartItemInputSchema = exports.CartItemSchema = exports.UpdateProductInputSchema = exports.CreateProductInputSchema = exports.ProductDetailOutputSchema = exports.GetProductsOutputSchema = exports.GetProductsInputSchema = exports.ProductSchema = exports.ProfileOutputSchema = exports.RegisterOutputSchema = exports.RegisterInputSchema = exports.LoginOutputSchema = exports.LoginInputSchema = exports.HelloOutputSchema = exports.HelloInputSchema = void 0;
+exports.UserStatsOutputSchema = exports.UpdateUserRoleInputSchema = exports.GetUsersOutputSchema = exports.GetUsersInputSchema = exports.UpdateOrderStatusInputSchema = exports.GetCategoriesOutputSchema = exports.OrderDetailOutputSchema = exports.GetOrdersOutputSchema = exports.GetOrdersInputSchema = exports.UpdateCouponInputSchema = exports.CreateCouponInputSchema = exports.GetCouponsOutputSchema = exports.GetCouponsInputSchema = exports.ValidateCouponOutputSchema = exports.ValidateCouponInputSchema = exports.CouponSchema = exports.CreateOrderOutputSchema = exports.CreateOrderInputSchema = exports.AddressSchema = exports.GetCartOutputSchema = exports.RemoveCartItemInputSchema = exports.UpdateCartItemInputSchema = exports.AddCartItemInputSchema = exports.CartItemSchema = exports.UpdateProductInputSchema = exports.CreateProductInputSchema = exports.ProductDetailOutputSchema = exports.GetProductsOutputSchema = exports.GetProductsInputSchema = exports.ProductSchema = exports.ProfileOutputSchema = exports.RegisterOutputSchema = exports.RegisterInputSchema = exports.LoginOutputSchema = exports.LoginInputSchema = exports.HelloOutputSchema = exports.HelloInputSchema = void 0;
 const zod_1 = require("zod");
 // Hello World 驗證 Schema
 exports.HelloInputSchema = zod_1.z.object({
@@ -309,4 +309,39 @@ exports.GetCategoriesOutputSchema = zod_1.z.array(zod_1.z.object({
 exports.UpdateOrderStatusInputSchema = zod_1.z.object({
     id: zod_1.z.string().uuid("不合法的訂單 ID 格式"),
     status: zod_1.z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+});
+// 查詢用戶列表輸入 Schema
+exports.GetUsersInputSchema = zod_1.z.object({
+    page: zod_1.z.number().int().min(1).default(1),
+    limit: zod_1.z.number().int().min(1).max(100).default(20),
+    search: zod_1.z.string().optional(),
+    role: zod_1.z.enum(["USER", "ADMIN"]).optional(),
+});
+// 查詢用戶列表輸出 Schema
+exports.GetUsersOutputSchema = zod_1.z.object({
+    users: zod_1.z.array(zod_1.z.object({
+        id: zod_1.z.string().uuid(),
+        email: zod_1.z.string().email(),
+        firstName: zod_1.z.string().nullable(),
+        lastName: zod_1.z.string().nullable(),
+        phone: zod_1.z.string().nullable(),
+        role: zod_1.z.enum(["USER", "ADMIN"]),
+        createdAt: zod_1.z.date().or(zod_1.z.string()),
+    })),
+    pagination: zod_1.z.object({
+        page: zod_1.z.number(),
+        limit: zod_1.z.number(),
+        total: zod_1.z.number(),
+        totalPages: zod_1.z.number(),
+    }),
+});
+// 更新用戶角色輸入 Schema
+exports.UpdateUserRoleInputSchema = zod_1.z.object({
+    id: zod_1.z.string().uuid("不合法的用戶 ID 格式"),
+    role: zod_1.z.enum(["USER", "ADMIN"]),
+});
+// 用戶統計數據輸出 Schema
+exports.UserStatsOutputSchema = zod_1.z.object({
+    totalOrders: zod_1.z.number(),
+    totalSpent: zod_1.z.number(),
 });
