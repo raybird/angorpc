@@ -5,8 +5,11 @@ import {
   GetProductsInputSchema,
   GetProductsOutputSchema,
   ProductDetailOutputSchema,
-  GetCategoriesOutputSchema
+  GetCategoriesOutputSchema,
+  CreateProductInputSchema,
+  UpdateProductInputSchema
 } from '../../shared/index.js';
+import { authMiddleware, AuthContext } from './middleware/auth.js';
 
 export const getProducts = os
   .input(GetProductsInputSchema)
@@ -111,9 +114,82 @@ export const getCategories = os
     return categories;
   });
 
+export const createProduct = os
+  .use(authMiddleware)
+  .input(CreateProductInputSchema)
+  .output(ProductDetailOutputSchema)
+  .handler(async ({ input, context }: { input: z.infer<typeof CreateProductInputSchema>; context: AuthContext }) => {
+    if (!context.user || context.user.role !== 'ADMIN') {
+      throw new Error('FORBIDDEN');
+    }
+
+    const product = await prisma.product.create({
+      data: {
+        name: input.name,
+        slug: input.slug,
+        description: input.description || null,
+        price: input.price,
+        categoryId: input.categoryId,
+        stock: input.stock,
+        isActive: input.isActive ?? true,
+      },
+      include: {
+        category: true,
+      },
+    });
+
+    return {
+      ...product,
+      price: Number(product.price),
+      category: {
+        id: product.category.id,
+        name: product.category.name,
+        slug: product.category.slug,
+      },
+    };
+  });
+
+export const updateProduct = os
+  .use(authMiddleware)
+  .input(UpdateProductInputSchema)
+  .output(ProductDetailOutputSchema)
+  .handler(async ({ input, context }: { input: z.infer<typeof UpdateProductInputSchema>; context: AuthContext }) => {
+    if (!context.user || context.user.role !== 'ADMIN') {
+      throw new Error('FORBIDDEN');
+    }
+
+    const product = await prisma.product.update({
+      where: { id: input.id },
+      data: {
+        name: input.name,
+        slug: input.slug,
+        description: input.description !== undefined ? input.description : undefined,
+        price: input.price,
+        categoryId: input.categoryId,
+        stock: input.stock,
+        isActive: input.isActive,
+      },
+      include: {
+        category: true,
+      },
+    });
+
+    return {
+      ...product,
+      price: Number(product.price),
+      category: {
+        id: product.category.id,
+        name: product.category.name,
+        slug: product.category.slug,
+      },
+    };
+  });
+
 export const productRouter = {
   getProducts,
   getProductById,
   getCategories,
+  createProduct,
+  updateProduct,
 };
 export type ProductRouter = typeof productRouter;

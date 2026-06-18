@@ -1,0 +1,247 @@
+<div class="products-container">
+  <header class="products-header">
+    <div class="header-left">
+      <h2>商品目錄管理</h2>
+      <p>管理您的商品清單、新增商品、設定售價與庫存數量</p>
+    </div>
+    <div class="header-right">
+      <button class="btn-create-product" (click)="openCreateModal()">
+        <span>＋</span> 新增商品
+      </button>
+    </div>
+  </header>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar glass-panel">
+    <div class="search-input-group">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        [value]="searchQuery()" 
+        (input)="onSearch($event)" 
+        placeholder="搜尋商品名稱或 Slug..." 
+      />
+    </div>
+
+    <div class="select-group">
+      <label for="categoryFilter">商品分類：</label>
+      <select id="categoryFilter" (change)="onCategoryChange($event)">
+        <option value="">全部商品分類</option>
+        @for (cat of categories(); track cat.id) {
+          <option [value]="cat.id">{{ cat.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Products Table -->
+  <div class="table-card glass-panel">
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>商品名稱</th>
+            <th>Slug (網址路徑)</th>
+            <th>售價</th>
+            <th>庫存</th>
+            <th>上架狀態</th>
+            <th class="text-right">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            @for (row of [1, 2, 3, 4, 5]; track row) {
+              <tr class="skeleton-row">
+                <td><div class="skeleton-cell w-80"></div></td>
+                <td><div class="skeleton-cell w-50"></div></td>
+                <td><div class="skeleton-cell w-40"></div></td>
+                <td><div class="skeleton-cell w-30"></div></td>
+                <td><div class="skeleton-cell w-30"></div></td>
+                <td class="text-right"><div class="skeleton-cell w-40 align-right"></div></td>
+              </tr>
+            }
+          } @else if (products().length === 0) {
+            <tr>
+              <td colspan="6" class="empty-row-text">
+                📭 查無任何商品資料
+              </td>
+            </tr>
+          } @else {
+            @for (product of products(); track product.id) {
+              <tr>
+                <td class="product-name-cell">
+                  <div class="product-name">{{ product.name }}</div>
+                  <div class="product-id-sub">{{ product.id }}</div>
+                </td>
+                <td class="product-slug">{{ product.slug }}</td>
+                <td class="product-price">${{ product.price | number:'1.2-2' }}</td>
+                <td class="product-stock" [class.low-stock]="product.stock <= 5">
+                  {{ product.stock }}
+                </td>
+                <td>
+                  <button 
+                    type="button" 
+                    class="toggle-switch-btn" 
+                    [class.active]="product.isActive"
+                    (click)="toggleActive(product)"
+                    [title]="product.isActive ? '點選下架' : '點選上架'"
+                  >
+                    <span class="switch-inner"></span>
+                  </button>
+                </td>
+                <td class="text-right">
+                  <button class="btn-action edit" (click)="openEditModal(product)">
+                    編輯
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <footer class="table-pagination" *ngIf="totalPages() > 1">
+      <span class="pagination-info">
+        第 {{ page() }} / {{ totalPages() }} 頁
+      </span>
+      <div class="pagination-buttons">
+        <button [disabled]="page() === 1" (click)="changePage(-1)">◀ 上一頁</button>
+        <button [disabled]="page() === totalPages()" (click)="changePage(1)">下一頁 ▶</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal Overlay Dialog -->
+  @if (isModalOpen()) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-dialog glass-panel" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <h3>{{ editingProduct() ? '📝 編輯商品資訊' : '📦 新增商品' }}</h3>
+          <button class="btn-close-modal" (click)="closeModal()">✕</button>
+        </header>
+
+        @if (errorMessage()) {
+          <div class="modal-error">
+            <span>⚠️</span> {{ errorMessage() }}
+          </div>
+        }
+
+        <form [formGroup]="productForm" (ngSubmit)="onSaveProduct()" class="modal-form">
+          <div class="form-row-grid">
+            <!-- Name -->
+            <div class="form-group">
+              <label for="prodName">商品名稱</label>
+              <input 
+                id="prodName" 
+                type="text" 
+                formControlName="name" 
+                placeholder="例如：頂級機械鍵盤"
+                [class.input-error]="productForm.get('name')?.touched && productForm.get('name')?.invalid"
+              />
+              @if (productForm.get('name')?.touched && productForm.get('name')?.invalid) {
+                <span class="field-error">請輸入商品名稱 (至少 2 個字元)</span>
+              }
+            </div>
+
+            <!-- Slug -->
+            <div class="form-group">
+              <label for="prodSlug">商品 Slug (網址路徑)</label>
+              <input 
+                id="prodSlug" 
+                type="text" 
+                formControlName="slug" 
+                placeholder="例如：top-mechanical-keyboard"
+                [class.input-error]="productForm.get('slug')?.touched && productForm.get('slug')?.invalid"
+              />
+              @if (productForm.get('slug')?.touched && productForm.get('slug')?.invalid) {
+                <span class="field-error">請輸入正確的 Slug 格式 (僅限小寫英數與減號)</span>
+              }
+            </div>
+
+            <!-- Price -->
+            <div class="form-group">
+              <label for="prodPrice">定價 (USD/NTD)</label>
+              <input 
+                id="prodPrice" 
+                type="number" 
+                formControlName="price" 
+                placeholder="例如：1999"
+                [class.input-error]="productForm.get('price')?.touched && productForm.get('price')?.invalid"
+              />
+              @if (productForm.get('price')?.touched && productForm.get('price')?.invalid) {
+                <span class="field-error">售價必須大於 0</span>
+              }
+            </div>
+
+            <!-- Stock -->
+            <div class="form-group">
+              <label for="prodStock">庫存數量</label>
+              <input 
+                id="prodStock" 
+                type="number" 
+                formControlName="stock" 
+                placeholder="例如：100"
+                [class.input-error]="productForm.get('stock')?.touched && productForm.get('stock')?.invalid"
+              />
+              @if (productForm.get('stock')?.touched && productForm.get('stock')?.invalid) {
+                <span class="field-error">庫存量不可為負數</span>
+              }
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+              <label for="prodCategory">所屬商品分類</label>
+              <select 
+                id="prodCategory" 
+                formControlName="categoryId"
+                [class.input-error]="productForm.get('categoryId')?.touched && productForm.get('categoryId')?.invalid"
+              >
+                @for (cat of categories(); track cat.id) {
+                  <option [value]="cat.id">{{ cat.name }}</option>
+                }
+              </select>
+              @if (productForm.get('categoryId')?.touched && productForm.get('categoryId')?.invalid) {
+                <span class="field-error">請選擇商品分類</span>
+              }
+            </div>
+
+            <!-- Status -->
+            <div class="form-group align-center">
+              <label>上架狀態</label>
+              <div class="checkbox-wrapper">
+                <input id="prodActive" type="checkbox" formControlName="isActive" />
+                <label for="prodActive" class="checkbox-label">立即上架公開銷售</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group full-width">
+            <label for="prodDesc">商品詳細介紹文案</label>
+            <textarea 
+              id="prodDesc" 
+              formControlName="description" 
+              placeholder="請輸入商品文案、尺寸或相關規格介紹..."
+              rows="4"
+            ></textarea>
+          </div>
+
+          <footer class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeModal()" [disabled]="isSaving()">
+              取消
+            </button>
+            <button type="submit" class="btn-submit" [disabled]="isSaving() || productForm.invalid">
+              @if (isSaving()) {
+                <span>保存處理中...</span>
+              } @else {
+                <span>確認保存</span>
+              }
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  }
+</div>

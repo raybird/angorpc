@@ -118,6 +118,41 @@ export interface AppRouterClient {
       updatedAt: string | Date;
     }>;
     getCategories: () => Promise<Category[]>;
+    createProduct: (input: {
+      name: string;
+      slug: string;
+      description?: string;
+      price: number;
+      categoryId: string;
+      stock: number;
+      isActive?: boolean;
+    }) => Promise<Product & {
+      version: number;
+      category: {
+        id: string;
+        name: string;
+        slug: string;
+      };
+      updatedAt: string | Date;
+    }>;
+    updateProduct: (input: {
+      id: string;
+      name?: string;
+      slug?: string;
+      description?: string;
+      price?: number;
+      categoryId?: string;
+      stock?: number;
+      isActive?: boolean;
+    }) => Promise<Product & {
+      version: number;
+      category: {
+        id: string;
+        name: string;
+        slug: string;
+      };
+      updatedAt: string | Date;
+    }>;
   };
   cart: {
     getCart: () => Promise<{ items: CartItem[]; totalPrice: number }>;
