@@ -1,0 +1,138 @@
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <div class="header-left">
+      <h2>營運儀表板</h2>
+      <p>歡迎回來，今日的 AngoRPC 電商平台營運狀況如下：</p>
+    </div>
+    <div class="header-right">
+      <span class="date-badge">📅 系統時間：2026年06月19日</span>
+    </div>
+  </header>
+
+  <!-- Stats Grid -->
+  @if (isLoading()) {
+    <div class="stats-grid">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="stat-card skeleton glass-panel">
+          <div class="skeleton-line title"></div>
+          <div class="skeleton-line value"></div>
+          <div class="skeleton-line desc"></div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="stats-grid">
+      <!-- Total Sales -->
+      <div class="stat-card glass-panel card-sales">
+        <div class="card-glow"></div>
+        <div class="stat-header">
+          <span class="stat-title">總銷售額</span>
+          <span class="stat-icon">💰</span>
+        </div>
+        <div class="stat-value">${{ totalSales() | number }}</div>
+        <div class="stat-desc">較上月成長 <span class="trend-up">+12.4%</span></div>
+      </div>
+
+      <!-- Orders Count -->
+      <div class="stat-card glass-panel card-orders">
+        <div class="card-glow"></div>
+        <div class="stat-header">
+          <span class="stat-title">總訂單數</span>
+          <span class="stat-icon">📜</span>
+        </div>
+        <div class="stat-value">{{ ordersCount() }}</div>
+        <div class="stat-desc">較上月成長 <span class="trend-up">+8.2%</span></div>
+      </div>
+
+      <!-- Products Count -->
+      <div class="stat-card glass-panel card-products">
+        <div class="card-glow"></div>
+        <div class="stat-header">
+          <span class="stat-title">上架商品數</span>
+          <span class="stat-icon">📦</span>
+        </div>
+        <div class="stat-value">{{ productsCount() }}</div>
+        <div class="stat-desc">新增上架商品 <span class="trend-neutral">5 件</span></div>
+      </div>
+
+      <!-- Customers Count -->
+      <div class="stat-card glass-panel card-customers">
+        <div class="card-glow"></div>
+        <div class="stat-header">
+          <span class="stat-title">活躍會員數</span>
+          <span class="stat-icon">👥</span>
+        </div>
+        <div class="stat-value">{{ customersCount() }}</div>
+        <div class="stat-desc">較上月成長 <span class="trend-up">+15.1%</span></div>
+      </div>
+    </div>
+  }
+
+  <!-- Insights & Tables -->
+  <div class="insights-grid">
+    <!-- Chart Placeholder -->
+    <div class="insights-card chart-card glass-panel">
+      <h3>📈 銷售營收趨勢 (近 7 日)</h3>
+      <div class="chart-visual">
+        <!-- Mock Graphic Accents -->
+        <div class="glow-line-container">
+          <svg class="glow-chart-svg" viewBox="0 0 500 150">
+            <defs>
+              <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--neon-indigo)" stop-opacity="0.3" />
+                <stop offset="100%" stop-color="var(--neon-indigo)" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+            <path d="M0 120 Q 80 80, 160 100 T 320 40 T 480 20 L 500 20 L 500 150 L 0 150 Z" fill="url(#chartGrad)" />
+            <path d="M0 120 Q 80 80, 160 100 T 320 40 T 480 20" fill="none" stroke="var(--neon-indigo)" stroke-width="3" filter="drop-shadow(0 0 6px var(--neon-indigo))" />
+            <circle cx="160" cy="100" r="5" fill="var(--neon-indigo)" />
+            <circle cx="320" cy="40" r="5" fill="var(--neon-indigo)" />
+            <circle cx="480" cy="20" r="5" fill="var(--neon-purple)" />
+          </svg>
+        </div>
+        <div class="chart-labels">
+          <span>06/13</span>
+          <span>06/14</span>
+          <span>06/15</span>
+          <span>06/16</span>
+          <span>06/17</span>
+          <span>06/18</span>
+          <span>今日 (06/19)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="insights-card recent-orders-card glass-panel">
+      <h3>🔔 近期最新訂單</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>訂單編號</th>
+              <th>客戶名稱</th>
+              <th>訂單金額</th>
+              <th>狀態</th>
+              <th>日期</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of recentOrders(); track order.id) {
+              <tr>
+                <td class="order-id">{{ order.id }}</td>
+                <td>{{ order.customer }}</td>
+                <td class="order-amount">${{ order.amount | number }}</td>
+                <td>
+                  <span class="status-badge" [class]="order.status.toLowerCase()">
+                    {{ order.status }}
+                  </span>
+                </td>
+                <td class="order-date">{{ order.date }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

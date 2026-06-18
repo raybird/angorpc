@@ -1,0 +1,85 @@
+<div class="admin-layout-container" [class.sidebar-collapsed]="isSidebarCollapsed()">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar glass-panel">
+    <div class="sidebar-brand">
+      @if (isSidebarCollapsed()) {
+        <span class="logo-short">A</span>
+      } @else {
+        <span class="logo-full">AngoRPC <span>Admin</span></span>
+      }
+    </div>
+
+    <nav class="sidebar-menu">
+      <a routerLink="dashboard" routerLinkActive="active" class="menu-item">
+        <span class="menu-icon">📊</span>
+        @if (!isSidebarCollapsed()) {
+          <span class="menu-label">儀表板</span>
+        }
+      </a>
+      
+      <a href="javascript:void(0)" class="menu-item disabled" title="即將推出">
+        <span class="menu-icon">📦</span>
+        @if (!isSidebarCollapsed()) {
+          <span class="menu-label">商品管理</span>
+        }
+        @if (!isSidebarCollapsed()) {
+          <span class="badge">Soon</span>
+        }
+      </a>
+
+      <a href="javascript:void(0)" class="menu-item disabled" title="即將推出">
+        <span class="menu-icon">📜</span>
+        @if (!isSidebarCollapsed()) {
+          <span class="menu-label">訂單管理</span>
+        }
+        @if (!isSidebarCollapsed()) {
+          <span class="badge">Soon</span>
+        }
+      </a>
+
+      <a href="javascript:void(0)" class="menu-item disabled" title="即將推出">
+        <span class="menu-icon">🎟️</span>
+        @if (!isSidebarCollapsed()) {
+          <span class="menu-label">優惠券管理</span>
+        }
+        @if (!isSidebarCollapsed()) {
+          <span class="badge">Soon</span>
+        }
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" (click)="onLogout()" title="安全登出">
+        <span class="menu-icon">🚪</span>
+        @if (!isSidebarCollapsed()) {
+          <span class="menu-label">安全登出</span>
+        }
+      </button>
+    </div>
+  </aside>
+
+  <!-- Right Section: Header + Content -->
+  <div class="admin-main-wrapper">
+    <!-- Header -->
+    <header class="admin-header glass-panel">
+      <button class="btn-toggle-sidebar" (click)="toggleSidebar()" title="切換側邊欄">
+        ☰
+      </button>
+
+      <div class="header-right">
+        <div class="admin-profile" *ngIf="authState.currentUser() as user">
+          <div class="avatar-badge">A</div>
+          <div class="admin-info">
+            <span class="admin-name">{{ user.firstName }} {{ user.lastName }}</span>
+            <span class="admin-role">{{ user.role }}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="admin-content-area">
+      <router-outlet />
+    </main>
+  </div>
+</div>
