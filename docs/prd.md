@@ -4,7 +4,7 @@
 - **產品名稱**: AngoRPC 電商平台
 - **版本**: v1.0
 - **建立日期**: 2025年10月26日
-- **最後更新**: 2025年10月26日
+- **最後更新**: 2026年06月18日
 - **負責人**: BMad Master
 
 ## 1. 產品概述
@@ -127,10 +127,10 @@
 - 定期安全審計
 
 ### 4.3 可擴展性需求
-- 支援水平擴展
-- 微服務架構準備
-- 資料庫分片支援
-- 快取機制
+- 支援水平擴展與微服務化架構準備（詳細演進規劃請參考 [前後台劃分與未來擴展規劃](file:///home/raybird/Documents/RCodes/angorpc/docs/architecture/storefront-admin-division.md)）
+- 資料庫分片與混合持久化（Polyglot Persistence）支援（評估與規劃請參考 [未來儲存與資料庫架構瓶頸與演進評估](file:///home/raybird/Documents/RCodes/angorpc/docs/architecture/storefront-admin-division.md#四-未來儲存與資料庫架構瓶頸與演進評估)）
+- 高效快取機制（初期預計引入 Redis 作為資料快取與高併發庫存扣減防護層）
+
 
 ## 5. 用戶體驗需求
 

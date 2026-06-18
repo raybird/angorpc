@@ -15,6 +15,7 @@ docs/
 │   ├── angular-ssr-explanation.md # Angular SSR 與 Universal 說明
 │   ├── orpc-adapters-analysis.md # oRPC Adapters 分析
 │   ├── ssr-orpc-integration.md # SSR 與 ORPC 整合架構
+│   ├── storefront-admin-division.md # 前後台劃分與擴展規劃
 │   ├── frontend.md          # 前端架構
 │   ├── backend.md           # 後端架構
 │   └── orpc-integration.md  # ORPC 整合設計
@@ -43,6 +44,7 @@ docs/
 - [Angular SSR 說明](./architecture/angular-ssr-explanation.md) - SSR 與 Universal 的關係
 - [oRPC Adapters 分析](./architecture/orpc-adapters-analysis.md) - oRPC 適配器詳細分析
 - [SSR 與 ORPC 整合](./architecture/ssr-orpc-integration.md) - 統一伺服器架構設計
+- [前後台劃分與擴展](./architecture/storefront-admin-division.md) - 前後台職責與未來架構擴展規劃
 - [環境設定](./setup/prerequisites.md) - 開始設定開發環境
 - [API 設計](./api/design.md) - 了解 API 設計原則
 
