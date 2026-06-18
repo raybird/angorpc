@@ -228,6 +228,62 @@ export const ValidateCouponOutputSchema = z.object({
   discountAmount: z.number().optional(),
 });
 
+// 查詢優惠券列表輸入 Schema
+export const GetCouponsInputSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(20),
+  search: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+// 查詢優惠券列表輸出 Schema
+export const GetCouponsOutputSchema = z.object({
+  coupons: z.array(CouponSchema),
+  pagination: z.object({
+    page: z.number(),
+    limit: z.number(),
+    total: z.number(),
+    totalPages: z.number(),
+  }),
+});
+
+// 建立優惠券輸入 Schema
+export const CreateCouponInputSchema = z.object({
+  code: z.string().min(1, "優惠碼不能為空").max(50, "優惠碼長度不能超過 50 個字元"),
+  discountType: z.enum(['PERCENTAGE', 'FIXED_AMOUNT']),
+  value: z.number().positive("折扣面額必須大於 0"),
+  minSpend: z.number().nonnegative("最低消費金額不能為負數").default(0),
+  isActive: z.boolean().default(true),
+  expiresAt: z.date().or(z.string()).nullable().optional(),
+}).refine(data => {
+  if (data.discountType === 'PERCENTAGE') {
+    return data.value <= 100;
+  }
+  return true;
+}, {
+  message: "百分比折扣面額不能大於 100",
+  path: ["value"]
+});
+
+// 更新優惠券輸入 Schema
+export const UpdateCouponInputSchema = z.object({
+  id: z.string().uuid("不合法的優惠券 ID 格式"),
+  code: z.string().min(1).max(50).optional(),
+  discountType: z.enum(['PERCENTAGE', 'FIXED_AMOUNT']).optional(),
+  value: z.number().positive("折扣面額必須大於 0").optional(),
+  minSpend: z.number().nonnegative("最低消費金額不能為負數").optional(),
+  isActive: z.boolean().optional(),
+  expiresAt: z.date().or(z.string()).nullable().optional(),
+}).refine(data => {
+  if (data.discountType === 'PERCENTAGE' && data.value !== undefined) {
+    return data.value <= 100;
+  }
+  return true;
+}, {
+  message: "百分比折扣面額不能大於 100",
+  path: ["value"]
+});
+
 // 查詢歷史訂單輸入 Schema
 export const GetOrdersInputSchema = z.object({
   page: z.number().int().min(1).default(1),

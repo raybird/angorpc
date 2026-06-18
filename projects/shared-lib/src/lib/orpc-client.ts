@@ -78,6 +78,10 @@ export interface Coupon {
   discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
   value: number;
   minSpend: number;
+  isActive: boolean;
+  expiresAt: string | Date | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface AppRouterClient {
@@ -194,9 +198,40 @@ export interface AppRouterClient {
     }) => Promise<{
       valid: boolean;
       error?: string;
-      coupon?: Coupon;
+      coupon?: Omit<Coupon, 'isActive' | 'expiresAt' | 'createdAt' | 'updatedAt'>;
       discountAmount?: number;
     }>;
+    getCoupons: (input: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      isActive?: boolean;
+    }) => Promise<{
+      coupons: Coupon[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }>;
+    createCoupon: (input: {
+      code: string;
+      discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+      value: number;
+      minSpend?: number;
+      isActive?: boolean;
+      expiresAt?: string | Date | null;
+    }) => Promise<Coupon>;
+    updateCoupon: (input: {
+      id: string;
+      code?: string;
+      discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT';
+      value?: number;
+      minSpend?: number;
+      isActive?: boolean;
+      expiresAt?: string | Date | null;
+    }) => Promise<Coupon>;
   };
 }
 

@@ -1,0 +1,235 @@
+<div class="coupons-container">
+  <!-- 頁面標題與操作 -->
+  <div class="page-header">
+    <div class="title-section">
+      <h1>優惠券與折扣管理</h1>
+      <p>管理平台上的折抵代碼、設定折扣面額、最低消費門檻與有效期限。</p>
+    </div>
+    <button class="btn-primary" (click)="openCreateModal()">
+      <span class="icon">+</span> 新增優惠券
+    </button>
+  </div>
+
+  <!-- 篩選與搜尋列 -->
+  <div class="filters-card">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        placeholder="搜尋優惠代碼..." 
+        [value]="searchQuery()" 
+        (input)="onSearch($event)"
+      />
+    </div>
+
+    <div class="filter-actions">
+      <div class="select-wrapper">
+        <select [value]="selectedStatus()" (change)="onStatusChange($event)">
+          <option value="ALL">全部啟用狀態</option>
+          <option value="ACTIVE">僅限已啟用</option>
+          <option value="INACTIVE">僅限已停用</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 數據載入狀態 -->
+  <div class="loading-state" *ngIf="isLoading()">
+    <div class="spinner"></div>
+    <p>正在同步伺服器優惠數據，請稍後...</p>
+  </div>
+
+  <!-- 空狀態 -->
+  <div class="empty-state" *ngIf="!isLoading() && coupons().length === 0">
+    <div class="empty-icon">🎟️</div>
+    <h3>找不到任何優惠券</h3>
+    <p>試著調整搜尋關鍵字或點擊右上角新增一張優惠券。</p>
+  </div>
+
+  <!-- 優惠券數據表 -->
+  <div class="table-container" *ngIf="!isLoading() && coupons().length > 0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>優惠代碼</th>
+          <th>折扣類型</th>
+          <th>面額</th>
+          <th>最低消費門檻</th>
+          <th>到期日期</th>
+          <th>狀態</th>
+          <th class="text-right">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let coupon of coupons()" [class.inactive-row]="!coupon.isActive">
+          <td class="code-cell">
+            <span class="coupon-code">{{ coupon.code }}</span>
+          </td>
+          <td>
+            <span class="badge" [class.badge-percentage]="coupon.discountType === 'PERCENTAGE'" [class.badge-fixed]="coupon.discountType === 'FIXED_AMOUNT'">
+              {{ coupon.discountType === 'PERCENTAGE' ? '百分比折扣' : '固定金額' }}
+            </span>
+          </td>
+          <td class="value-cell">
+            {{ coupon.discountType === 'PERCENTAGE' ? (coupon.value | number:'1.0-2') + '%' : '$' + (coupon.value | number:'1.2-2') }}
+          </td>
+          <td>
+            ${{ coupon.minSpend | number:'1.2-2' }}
+          </td>
+          <td>
+            <span *ngIf="!coupon.expiresAt" class="no-expiry">永久有效</span>
+            <span *ngIf="coupon.expiresAt" class="expiry-date">
+              {{ coupon.expiresAt | date:'yyyy-MM-dd' }}
+            </span>
+          </td>
+          <td>
+            <label class="switch-toggle">
+              <input 
+                type="checkbox" 
+                [checked]="coupon.isActive" 
+                (change)="toggleActive(coupon)"
+              />
+              <span class="slider"></span>
+            </label>
+          </td>
+          <td class="actions-cell text-right">
+            <button class="btn-icon" (click)="openEditModal(coupon)" title="編輯優惠券">
+              📝 編輯
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 分頁導航 -->
+    <div class="pagination">
+      <span class="page-info">
+        第 <strong>{{ page() }}</strong> 頁，共 {{ totalPages() }} 頁
+      </span>
+      <div class="pagination-buttons">
+        <button [disabled]="page() === 1" (click)="changePage(-1)" class="btn-page">◀ 上一頁</button>
+        <button [disabled]="page() === totalPages()" (click)="changePage(1)" class="btn-page">下一頁 ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 新增/編輯優惠券 Glassmorphism Modal 對話框 -->
+<div class="modal-overlay" *ngIf="isModalOpen()" (click)="closeModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ editingCoupon() ? '修改優惠券設定' : '新增專屬優惠券' }}</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <form [formGroup]="couponForm" (ngSubmit)="onSaveCoupon()" class="modal-form">
+      <!-- 錯誤橫幅 -->
+      <div class="error-banner" *ngIf="errorMessage()">
+        ⚠️ {{ errorMessage() }}
+      </div>
+
+      <div class="form-row">
+        <!-- 優惠代碼 -->
+        <div class="form-group col-12">
+          <label for="code">優惠代碼 <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="code" 
+            formControlName="code" 
+            placeholder="例如: SUMMER2026 (僅限英數字與底線)"
+            class="input-control text-uppercase"
+          />
+          <div class="validation-error" *ngIf="couponForm.get('code')?.touched && couponForm.get('code')?.invalid">
+            <span *ngIf="couponForm.get('code')?.errors?.['required']">優惠代碼不能為空</span>
+            <span *ngIf="couponForm.get('code')?.errors?.['pattern']">格式錯誤，僅限大寫英數字與 _- 符號</span>
+            <span *ngIf="couponForm.get('code')?.errors?.['minlength']">代碼長度至少需 3 個字元</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <!-- 折扣類型 -->
+        <div class="form-group col-6">
+          <label for="discountType">折扣計算模式 <span class="required">*</span></label>
+          <div class="select-wrapper">
+            <select id="discountType" formControlName="discountType" class="input-control">
+              <option value="PERCENTAGE">百分比折抵 (Percentage)</option>
+              <option value="FIXED_AMOUNT">固定金額折抵 (Fixed Amount)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 面額 -->
+        <div class="form-group col-6">
+          <label for="value">
+            折扣面額 <span class="required">*</span>
+            <span class="label-hint" *ngIf="couponForm.get('discountType')?.value === 'PERCENTAGE'">(1 ~ 100 %)</span>
+            <span class="label-hint" *ngIf="couponForm.get('discountType')?.value === 'FIXED_AMOUNT'">($ 點數)</span>
+          </label>
+          <input 
+            type="number" 
+            id="value" 
+            formControlName="value" 
+            step="0.01"
+            class="input-control"
+          />
+          <div class="validation-error" *ngIf="couponForm.get('value')?.touched && couponForm.get('value')?.invalid">
+            <span *ngIf="couponForm.get('value')?.errors?.['required']">折扣面額不能為空</span>
+            <span *ngIf="couponForm.get('value')?.errors?.['min']">面額必須大於 0</span>
+            <span *ngIf="couponForm.get('value')?.errors?.['max']">百分比折扣上限為 100%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <!-- 最低消費 -->
+        <div class="form-group col-6">
+          <label for="minSpend">最低消費門檻 <span class="required">*</span></label>
+          <input 
+            type="number" 
+            id="minSpend" 
+            formControlName="minSpend" 
+            step="0.01"
+            class="input-control"
+          />
+          <div class="validation-error" *ngIf="couponForm.get('minSpend')?.touched && couponForm.get('minSpend')?.invalid">
+            <span *ngIf="couponForm.get('minSpend')?.errors?.['required']">最低消費不能為空</span>
+            <span *ngIf="couponForm.get('minSpend')?.errors?.['min']">最低消費不能為負數</span>
+          </div>
+        </div>
+
+        <!-- 到期日期 -->
+        <div class="form-group col-6">
+          <label for="expiresAt">到期日期 <span class="label-hint">(選填，留空為無期限)</span></label>
+          <input 
+            type="date" 
+            id="expiresAt" 
+            formControlName="expiresAt" 
+            class="input-control"
+          />
+        </div>
+      </div>
+
+      <div class="form-row mt-3">
+        <!-- 是否啟用 -->
+        <div class="form-group col-12 checkbox-group">
+          <label class="switch-toggle-wrapper">
+            <label class="switch-toggle">
+              <input type="checkbox" formControlName="isActive" />
+              <span class="slider"></span>
+            </label>
+            <span class="checkbox-label">立即啟用此優惠券</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 底部按鈕 -->
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeModal()">取消</button>
+        <button type="submit" class="btn-primary" [disabled]="isSaving()">
+          {{ isSaving() ? '儲存中...' : '確認保存' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

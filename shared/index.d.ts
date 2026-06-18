@@ -252,6 +252,55 @@ export declare const ValidateCouponOutputSchema: z.ZodObject<{
     }, z.core.$strip>>;
     discountAmount: z.ZodOptional<z.ZodNumber>;
 }, z.core.$strip>;
+export declare const GetCouponsInputSchema: z.ZodObject<{
+    page: z.ZodDefault<z.ZodNumber>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    search: z.ZodOptional<z.ZodString>;
+    isActive: z.ZodOptional<z.ZodBoolean>;
+}, z.core.$strip>;
+export declare const GetCouponsOutputSchema: z.ZodObject<{
+    coupons: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        code: z.ZodString;
+        discountType: z.ZodEnum<{
+            PERCENTAGE: "PERCENTAGE";
+            FIXED_AMOUNT: "FIXED_AMOUNT";
+        }>;
+        value: z.ZodNumber;
+        minSpend: z.ZodNumber;
+        isActive: z.ZodBoolean;
+        expiresAt: z.ZodNullable<z.ZodUnion<[z.ZodDate, z.ZodString]>>;
+    }, z.core.$strip>>;
+    pagination: z.ZodObject<{
+        page: z.ZodNumber;
+        limit: z.ZodNumber;
+        total: z.ZodNumber;
+        totalPages: z.ZodNumber;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+export declare const CreateCouponInputSchema: z.ZodObject<{
+    code: z.ZodString;
+    discountType: z.ZodEnum<{
+        PERCENTAGE: "PERCENTAGE";
+        FIXED_AMOUNT: "FIXED_AMOUNT";
+    }>;
+    value: z.ZodNumber;
+    minSpend: z.ZodDefault<z.ZodNumber>;
+    isActive: z.ZodDefault<z.ZodBoolean>;
+    expiresAt: z.ZodOptional<z.ZodNullable<z.ZodUnion<[z.ZodDate, z.ZodString]>>>;
+}, z.core.$strip>;
+export declare const UpdateCouponInputSchema: z.ZodObject<{
+    id: z.ZodString;
+    code: z.ZodOptional<z.ZodString>;
+    discountType: z.ZodOptional<z.ZodEnum<{
+        PERCENTAGE: "PERCENTAGE";
+        FIXED_AMOUNT: "FIXED_AMOUNT";
+    }>>;
+    value: z.ZodOptional<z.ZodNumber>;
+    minSpend: z.ZodOptional<z.ZodNumber>;
+    isActive: z.ZodOptional<z.ZodBoolean>;
+    expiresAt: z.ZodOptional<z.ZodNullable<z.ZodUnion<[z.ZodDate, z.ZodString]>>>;
+}, z.core.$strip>;
 export declare const GetOrdersInputSchema: z.ZodObject<{
     page: z.ZodDefault<z.ZodNumber>;
     limit: z.ZodDefault<z.ZodNumber>;
