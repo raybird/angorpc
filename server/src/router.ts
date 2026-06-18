@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { os } from '@orpc/server';
 import { HelloInputSchema, HelloOutputSchema } from '../../shared/index.js';
 import { userRouter } from './user.js';
+import { productRouter } from './product.js';
 
 export const hello = os
   .input(HelloInputSchema)
@@ -16,6 +17,7 @@ export const hello = os
 export const appRouter = {
   hello,
   user: userRouter,
+  product: productRouter,
 };
 
 // Export router type for the frontend

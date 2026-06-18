@@ -1,39 +1,50 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { OrpcClientService } from 'shared-lib';
+import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { RouterOutlet, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { OrpcClientService, AuthStateService, Product } from 'shared-lib';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, RouterLink],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App implements OnInit {
   protected readonly title = signal('AngoRPC Storefront');
-  protected readonly welcomeMessage = signal<string>('正在連接 oRPC API 伺服器...');
-  protected readonly timestamp = signal<string>('');
+  protected readonly products = signal<Product[]>([]);
   protected readonly isLoading = signal<boolean>(true);
   protected readonly errorOccurred = signal<boolean>(false);
 
   private orpc = inject(OrpcClientService);
+  private authState = inject(AuthStateService);
+
+  // Sync member session with storefront landing page
+  protected readonly currentUser = this.authState.currentUser;
+  protected readonly isAuthenticated = this.authState.isAuthenticated;
 
   async ngOnInit() {
-    await this.fetchHello();
+    await this.fetchProducts();
   }
 
-  async fetchHello() {
+  async fetchProducts() {
     this.isLoading.set(true);
     this.errorOccurred.set(false);
     try {
-      const response = await this.orpc.client.hello({ name: 'Raybird' });
-      this.welcomeMessage.set(response.message);
-      this.timestamp.set(response.timestamp);
+      const response = await this.orpc.client.product.getProducts({
+        page: 1,
+        limit: 12
+      });
+      this.products.set(response.products);
     } catch (err) {
-      console.error('oRPC API Error:', err);
-      this.welcomeMessage.set('無法連線至後端 oRPC 伺服器，請確認 Node.js API 伺服器是否已在埠號 3000 啟動。');
+      console.error('oRPC Fetch Products Error:', err);
       this.errorOccurred.set(true);
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  protected handleLogout() {
+    this.authState.logout();
   }
 }

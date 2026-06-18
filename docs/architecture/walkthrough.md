@@ -1,33 +1,35 @@
-# AngoRPC 用戶認證與會員系統實作 - 成果總結
+# AngoRPC 商品目錄與管理系統實作 - 成果總結
 
-我們已順利為 AngoRPC 電商平台實作完成了完整的「用戶認證與會員註冊登入系統 (JWT + Zod 驗證)」，涵蓋後端密碼雜湊、JWT 驗證中間件、前端全域 Signals 狀態服務，以及 Storefront 的登入與註冊頁面。
+我們已順利為 AngoRPC 電商平台實作完成了完整的「商品目錄與管理系統」，包含本地 Docker Compose 服務、Prisma 資料庫資料庫播種 (Seeding)、後端商品分頁與模糊搜尋 API、以及前台 Storefront 展示動態商品卡片列表的重構。
 
 ---
 
 ## 實作變更與架構配置
 
-### 1. 後端依賴與密碼加密安全
-* 於 `server/` 安裝 `bcrypt` 與 `jsonwebtoken` 及其 TS 聲明庫。
-* 實作 `server/src/db.ts` 作為 **PrismaClient 單例 (Singleton)**，供所有服務共用，優化連線池。
-* 在 `server/src/user.ts` 中，註冊帳號時密碼皆透過 `bcrypt.hash` 進行 10 輪鹽值雜湊處理，確保資料庫儲存安全。
+### 1. 本地基礎設施自動化
+* 於專案根目錄建立 `docker-compose.yml`，提供 PostgreSQL 15 與 Redis 7 本地開發環境的一鍵啟動。
+* 執行 `npx prisma db push` 快速同步 Prisma schema 與資料庫結構。
 
-### 2. JWT 驗證中間件與 Context 傳遞
-* **Express 轉接層**：更新 `server/src/server.ts`，在呼叫 oRPC `fetchHandler` 時將 `req.headers.authorization` 傳入 oRPC Context。
-* **`authMiddleware`**：建立 `server/src/middleware/auth.ts` 驗證 `Bearer` JWT 令牌，解析成功後自動將 `userId` 與 `role` 載入 Context，並掛載於 `getProfile` 端點。
+### 2. 資料庫播種 (Prisma Seeding)
+* 於 `server/prisma/seed.ts` 實作資料庫播種腳本：
+  * 清理舊有資料以維持乾淨的資料一致性。
+  * 建立三項主要分類：`3C 電子`、`智慧家電`、`生活百貨`。
+  * 播種多樣化的熱門示範商品（如 `AngoRPC Horizon Book 15`、`Aura Glow 智慧極光氛圍燈` 等）供前端展示。
+  * 執行 `npx ts-node --esm prisma/seed.ts` 完成播種。
 
-### 3. 前端全域認證狀態服務 (`AuthStateService`)
-* 於 `shared-lib/src/lib/auth-state.ts` 建立 `AuthStateService`：
-  * 使用 Angular Signals 全域追蹤 `currentUser` 與 `token`。
-  * 提供 `isAuthenticated` 與 `isAdmin` 作為 `computed` 唯讀訊號。
-  * **SSR 相容防護**：利用 `isPlatformBrowser` 包覆 `localStorage` 的讀寫，確保頁面在伺服器端渲染 (SSR) 期間不崩潰。
-  * **自動恢復會話**：應用程式初始化時若本地有 token，會自動發送 `getProfile` 請求恢復會員狀態。
+### 3. 後端商品 API 服務
+* 於 `server/src/product.ts` 中，實作 `getProducts` 與 `getProductById` procedures：
+  * **`getProducts`**：支援商品分類過濾、關鍵字在商品名稱與描述中的模糊比對（不分大小寫），並返回分頁元數據（頁碼、每頁數量、總頁數）。
+  * **`getProductById`**：支援依商品 ID 或 Slug 查詢詳細資料，並利用 Prisma `include` 帶出所屬 Category 屬性。
+  * **Decimal 型態相容處理**：手動將 Prisma 回傳的 `Decimal` 價格強轉為 `Number`，避開 Zod schema 驗證輸出的錯誤。
+* 在主路由 `server/src/router.ts` 中掛載 `product: productRouter`。
 
-### 4. 登入與註冊頁面 UI
-* 於 `projects/storefront/src/app/login/` 及 `projects/storefront/src/app/register/` 建立精美的登入/註冊頁面。
-* **技術特點**：
-  * 使用 Angular `ReactiveFormsModule` 進行響應式表單欄位驗證（如 Email 格式、密碼長度）。
-  * 導入 **Premium 深色極光設計風格 (Dark Mode Aurora Glow)** 與玻璃擬態卡片，提升整體視覺感受。
-  * 支援註冊後/登入後自動透過 Router 導航返回首頁。
+### 4. 前台 Storefront 展示重構
+* **`shared-lib`**：擴充 `AppRouterClient` 以導出包含 `Product` 與 `product` 的 Procedure 泛型對齊。
+* **首頁重構 (`app.ts` 與 `app.html`)**：
+  * 串接 `OrpcClientService` 呼叫 `product.getProducts` 動態取得首頁商品卡片。
+  * 整合 `AuthStateService` 全域 Signals，在頁首 Navbar 即時呈現當前會員歡迎詞與「登出」按鈕。
+  * 設計極具視覺質感的高級深色極光 (Dark Mode Aurora Glow) 電商商品牆，並加入微動態的 Skeletom Screen 骨架屏載入動畫。
 
 ---
 
@@ -36,7 +38,7 @@
 * **後端編譯驗證**：在 `server/` 下執行 `npm run build`，後端 TypeScript 完全無編譯錯誤。
 * **前端編譯驗證**：
   * 執行 `npx ng build shared-lib` 順利產出。
-  * 執行 `npx ng build storefront` 成功產生 Browser & Server (SSR) bundles。
+  * 執行 `npx ng build storefront` 成功編譯出 Browser & Server (SSR) bundles。
 
 ---
 *文檔更新日期：2026年06月18日*

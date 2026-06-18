@@ -57,3 +57,79 @@ export const ProfileOutputSchema = z.object({
   role: z.enum(["USER", "ADMIN"]),
   createdAt: z.date().or(z.string()),
 });
+
+// 商品主要 Schema 結構
+export const ProductSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+  price: z.number(),
+  categoryId: z.string().uuid(),
+  stock: z.number(),
+  isActive: z.boolean(),
+  createdAt: z.date().or(z.string()),
+});
+
+// 分頁商品查詢輸入 Schema
+export const GetProductsInputSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(20),
+  categoryId: z.string().uuid().optional(),
+  search: z.string().optional(),
+  includeInactive: z.boolean().default(false),
+});
+
+// 分頁商品查詢輸出 Schema
+export const GetProductsOutputSchema = z.object({
+  products: z.array(ProductSchema),
+  pagination: z.object({
+    page: z.number(),
+    limit: z.number(),
+    total: z.number(),
+    totalPages: z.number(),
+  }),
+});
+
+// 查詢單一商品詳情輸出 Schema
+export const ProductDetailOutputSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+  price: z.number(),
+  stock: z.number(),
+  version: z.number(),
+  isActive: z.boolean(),
+  categoryId: z.string().uuid(),
+  category: z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    slug: z.string(),
+  }),
+  createdAt: z.date().or(z.string()),
+  updatedAt: z.date().or(z.string()),
+});
+
+// 建立商品輸入 Schema
+export const CreateProductInputSchema = z.object({
+  name: z.string().min(1, "商品名稱不能為空").max(255),
+  slug: z.string().min(1, "商品 Slug 不能為空").max(255),
+  description: z.string().optional(),
+  price: z.number().positive("商品價格必須大於 0"),
+  categoryId: z.string().uuid("不合法的分類 ID 格式"),
+  stock: z.number().int().nonnegative("庫存量不能為負數").default(0),
+  isActive: z.boolean().default(true),
+});
+
+// 更新商品輸入 Schema
+export const UpdateProductInputSchema = z.object({
+  id: z.string().uuid("不合法的商品 ID 格式"),
+  name: z.string().min(1).max(255).optional(),
+  slug: z.string().min(1).max(255).optional(),
+  description: z.string().optional(),
+  price: z.number().positive().optional(),
+  categoryId: z.string().uuid().optional(),
+  stock: z.number().int().nonnegative().optional(),
+  isActive: z.boolean().optional(),
+});
