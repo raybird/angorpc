@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "paths": {
+      "zod": ["../node_modules/zod"]
+    }
+  },
+  "include": ["src/**/*", "prisma/**/*", "../shared/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
