@@ -8,6 +8,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: 'USER' | 'ADMIN';
+  phone?: string | null;
 }
 
 export interface Product {
@@ -37,6 +38,18 @@ export interface Address {
   phone: string;
   address: string;
   postalCode?: string;
+}
+
+export interface UserAddress {
+  id: string;
+  userId: string;
+  recipientName: string;
+  phone: string;
+  address: string;
+  postalCode: string | null;
+  isDefault: boolean;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface Order {
@@ -72,6 +85,28 @@ export interface Category {
   slug: string;
 }
 
+export interface DashboardStats {
+  totalSales: number;
+  ordersCount: number;
+  productsCount: number;
+  customersCount: number;
+  recentOrders: {
+    id: string;
+    customerName: string;
+    totalAmount: number;
+    status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+    createdAt: string | Date;
+  }[];
+  salesHistory: {
+    date: string;
+    amount: number;
+  }[];
+  categorySales: {
+    categoryName: string;
+    amount: number;
+  }[];
+}
+
 export interface Coupon {
   id: string;
   code: string;
@@ -90,6 +125,30 @@ export interface AppRouterClient {
     register: (input: any) => Promise<{ token: string; user: User }>;
     login: (input: any) => Promise<{ token: string; user: User }>;
     getProfile: () => Promise<User & { createdAt: string | Date }>;
+    updateProfile: (input: {
+      firstName?: string;
+      lastName?: string;
+      phone?: string | null;
+      password?: string;
+    }) => Promise<User & { createdAt: string | Date }>;
+    getAddresses: () => Promise<UserAddress[]>;
+    createAddress: (input: {
+      recipientName: string;
+      phone: string;
+      address: string;
+      postalCode?: string | null;
+      isDefault?: boolean;
+    }) => Promise<UserAddress>;
+    updateAddress: (input: {
+      id: string;
+      recipientName?: string;
+      phone?: string;
+      address?: string;
+      postalCode?: string | null;
+      isDefault?: boolean;
+    }) => Promise<UserAddress>;
+    deleteAddress: (input: { id: string }) => Promise<{ success: boolean }>;
+    setDefaultAddress: (input: { id: string }) => Promise<UserAddress>;
     getUsers: (input: {
       page?: number;
       limit?: number;
@@ -270,6 +329,9 @@ export interface AppRouterClient {
       isActive?: boolean;
       expiresAt?: string | Date | null;
     }) => Promise<Coupon>;
+  };
+  report: {
+    getDashboardStats: () => Promise<DashboardStats>;
   };
 }
 

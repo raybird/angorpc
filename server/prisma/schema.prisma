@@ -22,8 +22,27 @@ model User {
   // 關係定義
   cartItems    CartItem[]
   orders       Order[]
+  addresses    UserAddress[]
 
   @@map("users")
+}
+
+/// 用戶常用地址實體
+model UserAddress {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  recipientName String   @map("recipient_name") @db.VarChar(100)
+  phone         String   @db.VarChar(20)
+  address       String   @db.Text
+  postalCode    String?  @map("postal_code") @db.VarChar(20)
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // 關係定義
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_addresses")
 }
 
 enum UserRole {

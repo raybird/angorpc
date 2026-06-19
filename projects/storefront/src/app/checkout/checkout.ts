@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { CartStateService, OrpcClientService, AuthStateService } from 'shared-lib';
+import { CartStateService, OrpcClientService, AuthStateService, UserAddress } from 'shared-lib';
 
 @Component({
   selector: 'app-checkout',
@@ -20,6 +20,7 @@ export class CheckoutComponent implements OnInit {
 
   protected readonly isLoading = signal(false);
   protected readonly isSameAddress = signal(true);
+  protected readonly savedAddresses = signal<UserAddress[]>([]);
 
   // 優惠券相關 Signals
   protected readonly couponCodeInput = signal('');
@@ -70,11 +71,43 @@ export class CheckoutComponent implements OnInit {
       this.router.navigate(['/']);
     }
 
+    if (this.authState.isAuthenticated()) {
+      this.loadSavedAddresses();
+    }
+
     this.checkoutForm.get('shippingAddress')?.valueChanges.subscribe(() => {
       if (this.isSameAddress()) {
         this.syncAddresses();
       }
     });
+  }
+
+  async loadSavedAddresses() {
+    try {
+      const list = await this.orpc.client.user.getAddresses();
+      this.savedAddresses.set(list);
+      
+      // 如果有預設地址，自動帶入
+      const defaultAddr = list.find(a => a.isDefault);
+      if (defaultAddr) {
+        this.onSelectSavedAddress(defaultAddr);
+      }
+    } catch (err) {
+      console.error('Failed to load saved addresses:', err);
+    }
+  }
+
+  onSelectSavedAddress(addr: UserAddress) {
+    this.checkoutForm.get('shippingAddress')?.patchValue({
+      recipientName: addr.recipientName,
+      phone: addr.phone,
+      address: addr.address,
+      postalCode: addr.postalCode || ''
+    });
+    
+    if (this.isSameAddress()) {
+      this.syncAddresses();
+    }
   }
 
   toggleSameAddress() {

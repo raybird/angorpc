@@ -58,6 +58,46 @@ export const ProfileOutputSchema = z.object({
   createdAt: z.date().or(z.string()),
 });
 
+// 更新會員資料輸入 Schema
+export const UpdateProfileInputSchema = z.object({
+  firstName: z.string().min(1, "名字不能為空").max(100).optional(),
+  lastName: z.string().min(1, "姓氏不能為空").max(100).optional(),
+  phone: z.string().regex(/^\+?[0-9]{8,15}$/, "不合法的電話號碼格式").optional().nullable(),
+  password: z.string().min(8, "密碼長度至少需 8 碼").max(100).optional(),
+});
+
+// 用戶常用地址 Schema
+export const UserAddressSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  recipientName: z.string().min(1, "收件人姓名不能為空"),
+  phone: z.string().min(8, "電話格式不符"),
+  address: z.string().min(5, "收件地址需完整填寫"),
+  postalCode: z.string().nullable().optional(),
+  isDefault: z.boolean(),
+  createdAt: z.date().or(z.string()),
+  updatedAt: z.date().or(z.string()),
+});
+
+// 新增常用地址輸入 Schema
+export const CreateAddressInputSchema = z.object({
+  recipientName: z.string().min(1, "收件人姓名不能為空").max(100),
+  phone: z.string().regex(/^\+?[0-9]{8,15}$/, "不合法的電話號碼格式"),
+  address: z.string().min(5, "收件地址需完整填寫").max(255),
+  postalCode: z.string().max(20).optional().nullable(),
+  isDefault: z.boolean().default(false),
+});
+
+// 更新常用地址輸入 Schema
+export const UpdateAddressInputSchema = z.object({
+  id: z.string().uuid("不合法的地址 ID 格式"),
+  recipientName: z.string().min(1, "收件人姓名不能為空").max(100).optional(),
+  phone: z.string().regex(/^\+?[0-9]{8,15}$/, "不合法的電話號碼格式").optional(),
+  address: z.string().min(5, "收件地址需完整填寫").max(255).optional(),
+  postalCode: z.string().max(20).optional().nullable(),
+  isDefault: z.boolean().optional(),
+});
+
 // 商品主要 Schema 結構
 export const ProductSchema = z.object({
   id: z.string().uuid(),
@@ -395,6 +435,29 @@ export const PayOrderOutputSchema = z.object({
   orderId: z.string().uuid(),
   status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
   errorMessage: z.string().optional(),
+});
+
+// 後台 Dashboard 數據輸出 Schema
+export const GetDashboardStatsOutputSchema = z.object({
+  totalSales: z.number(),
+  ordersCount: z.number(),
+  productsCount: z.number(),
+  customersCount: z.number(),
+  recentOrders: z.array(z.object({
+    id: z.string().uuid(),
+    customerName: z.string(),
+    totalAmount: z.number(),
+    status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+    createdAt: z.date().or(z.string()),
+  })),
+  salesHistory: z.array(z.object({
+    date: z.string(),
+    amount: z.number(),
+  })),
+  categorySales: z.array(z.object({
+    categoryName: z.string(),
+    amount: z.number(),
+  })),
 });
 
 

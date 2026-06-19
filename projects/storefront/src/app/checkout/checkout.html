@@ -28,6 +28,24 @@
             <div class="form-card" formGroupName="shippingAddress">
               <h3>📦 收件人配送資訊</h3>
               
+              @if (savedAddresses().length > 0) {
+                <div class="saved-addresses-quick-select">
+                  <span class="quick-label">📋 常用地址一鍵填入：</span>
+                  <div class="quick-btns">
+                    @for (addr of savedAddresses(); track addr.id) {
+                      <button 
+                        type="button" 
+                        class="btn-quick-addr" 
+                        [title]="addr.recipientName + ' - ' + addr.address"
+                        (click)="onSelectSavedAddress(addr)"
+                      >
+                        👤 {{ addr.recipientName }} @if (addr.isDefault) { <span class="default-star">⭐</span> }
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+              
               <div class="form-fields-grid">
                 <!-- 姓名 -->
                 <div class="form-field">

@@ -6,6 +6,7 @@ import { productRouter } from './product.js';
 import { cartRouter } from './cart.js';
 import { orderRouter } from './order.js';
 import { couponRouter } from './coupon.js';
+import { reportRouter } from './report.js';
 
 export const hello = os
   .input(HelloInputSchema)
@@ -24,6 +25,7 @@ export const appRouter = {
   cart: cartRouter,
   order: orderRouter,
   coupon: couponRouter,
+  report: reportRouter,
 };
 
 // Export router type for the frontend

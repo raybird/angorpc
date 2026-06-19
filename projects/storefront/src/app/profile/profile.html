@@ -1,0 +1,237 @@
+<div class="profile-container">
+  <header class="profile-header">
+    <div class="header-tag">MEMBER CENTER</div>
+    <h1>會員中心</h1>
+    <p class="header-desc">管理您的個人基本資料與常用收件地址簿，享受快速流暢的結帳服務</p>
+  </header>
+
+  <div class="profile-grid">
+    <!-- 左欄：基本資料設定 -->
+    <section class="profile-card basic-info-section">
+      <div class="card-header">
+        <span class="icon">👤</span>
+        <h2>帳號與基本資料</h2>
+      </div>
+
+      @if (isProfileLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>正在載入基本資料...</p>
+        </div>
+      } @else {
+        <form [formGroup]="profileForm" (ngSubmit)="onSaveProfile()" class="profile-form">
+          <!-- 唯讀電子信箱 -->
+          <div class="form-group">
+            <label>電子信箱 (不可修改)</label>
+            <input type="text" [value]="authState.currentUser()?.email" readonly class="form-control read-only">
+          </div>
+
+          <div class="form-row">
+            <!-- 姓氏 -->
+            <div class="form-group">
+              <label for="lastName">姓氏 <span class="required">*</span></label>
+              <input type="text" id="lastName" formControlName="lastName" class="form-control" placeholder="請輸入您的姓氏">
+              @if (profileForm.get('lastName')?.touched && profileForm.get('lastName')?.errors?.['required']) {
+                <span class="error-msg">❌ 姓氏不能為空</span>
+              }
+            </div>
+
+            <!-- 名字 -->
+            <div class="form-group">
+              <label for="firstName">名字 <span class="required">*</span></label>
+              <input type="text" id="firstName" formControlName="firstName" class="form-control" placeholder="請輸入您的名字">
+              @if (profileForm.get('firstName')?.touched && profileForm.get('firstName')?.errors?.['required']) {
+                <span class="error-msg">❌ 名字不能為空</span>
+              }
+            </div>
+          </div>
+
+          <!-- 聯絡電話 -->
+          <div class="form-group">
+            <label for="phone">聯絡電話</label>
+            <input type="text" id="phone" formControlName="phone" class="form-control" placeholder="例如: 0912345678">
+            @if (profileForm.get('phone')?.touched && profileForm.get('phone')?.errors?.['pattern']) {
+              <span class="error-msg">❌ 不合法的電話號碼格式</span>
+            }
+          </div>
+
+          <div class="form-divider">
+            <span>安全與密碼變更</span>
+          </div>
+
+          <div class="form-row">
+            <!-- 新密碼 -->
+            <div class="form-group">
+              <label for="password">新密碼 (不變更請留空)</label>
+              <input type="password" id="password" formControlName="password" class="form-control" placeholder="至少 8 碼英文數字">
+              @if (profileForm.get('password')?.touched && profileForm.get('password')?.errors?.['minlength']) {
+                <span class="error-msg">❌ 密碼長度至少需 8 碼</span>
+              }
+            </div>
+
+            <!-- 確認密碼 -->
+            <div class="form-group">
+              <label for="confirmPassword">確認新密碼</label>
+              <input type="password" id="confirmPassword" formControlName="confirmPassword" class="form-control" placeholder="請再次輸入新密碼">
+              @if (profileForm.get('confirmPassword')?.touched && profileForm.hasError('passwordMismatch')) {
+                <span class="error-msg">❌ 兩次輸入的密碼不一致</span>
+              }
+            </div>
+          </div>
+
+          <!-- 訊息回饋區 -->
+          @if (profileSuccessMsg()) {
+            <div class="alert-success">✨ {{ profileSuccessMsg() }}</div>
+          }
+          @if (profileErrorMsg()) {
+            <div class="alert-danger">❌ {{ profileErrorMsg() }}</div>
+          }
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="isSavingProfile() || profileForm.invalid">
+              @if (isSavingProfile()) {
+                <div class="spinner-sm"></div> 正在儲存...
+              } @else {
+                💾 儲存修改
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </section>
+
+    <!-- 右欄：常用地址簿 -->
+    <section class="profile-card address-book-section">
+      <div class="card-header justify-between">
+        <div class="header-left">
+          <span class="icon">📍</span>
+          <h2>常用收件地址簿</h2>
+        </div>
+        <button class="btn-add" (click)="openAddAddressModal()">➕ 新增地址</button>
+      </div>
+
+      @if (isAddressesLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>正在載入地址簿...</p>
+        </div>
+      } @else {
+        @if (addresses().length === 0) {
+          <div class="empty-state">
+            <span class="empty-icon">📫</span>
+            <h3>尚無常用地址</h3>
+            <p>新增常用收件地址，結帳時即可一鍵快速套用，省去繁瑣填寫！</p>
+            <button class="btn-primary-sm margin-top" (click)="openAddAddressModal()">立即新增第一筆</button>
+          </div>
+        } @else {
+          <div class="address-list">
+            @for (addr of addresses(); track addr.id) {
+              <div class="address-item" [class.is-default]="addr.isDefault">
+                <div class="address-item-body">
+                  <div class="address-recipient">
+                    <span class="name">{{ addr.recipientName }}</span>
+                    <span class="phone">{{ addr.phone }}</span>
+                    @if (addr.isDefault) {
+                      <span class="default-badge">預設地址</span>
+                    }
+                  </div>
+                  <div class="address-detail">
+                    @if (addr.postalCode) {
+                      <span class="postal-code">[{{ addr.postalCode }}]</span>
+                    }
+                    {{ addr.address }}
+                  </div>
+                </div>
+
+                <div class="address-item-actions">
+                  @if (!addr.isDefault) {
+                    <button class="btn-text-primary" (click)="onSetDefaultAddress(addr.id)" title="設為預設地址">設為預設</button>
+                  }
+                  <button class="btn-icon-edit" (click)="openEditAddressModal(addr)" title="編輯地址">✏️</button>
+                  <button class="btn-icon-delete" (click)="onDeleteAddress(addr.id)" title="刪除地址">🗑️</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </section>
+  </div>
+
+  <!-- 地址 新增/編輯 Modal 彈窗 -->
+  @if (showAddressModal()) {
+    <div class="modal-overlay" (click)="closeAddressModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ editingAddress() ? '✏️ 編輯常用地址' : '➕ 新增常用地址' }}</h3>
+          <button class="btn-close" (click)="closeAddressModal()">✕</button>
+        </div>
+
+        <form [formGroup]="addressForm" (ngSubmit)="onSaveAddress()" class="modal-form">
+          <!-- 收件人姓名 -->
+          <div class="form-group">
+            <label for="recipientName">收件人姓名 <span class="required">*</span></label>
+            <input type="text" id="recipientName" formControlName="recipientName" class="form-control" placeholder="請輸入收件人姓名">
+            @if (addressForm.get('recipientName')?.touched && addressForm.get('recipientName')?.errors?.['required']) {
+              <span class="error-msg">❌ 收件人姓名不能為空</span>
+            }
+          </div>
+
+          <!-- 收件人電話 -->
+          <div class="form-group">
+            <label for="addrPhone">收件人電話 <span class="required">*</span></label>
+            <input type="text" id="addrPhone" formControlName="phone" class="form-control" placeholder="例如: 0912345678">
+            @if (addressForm.get('phone')?.touched && addressForm.get('phone')?.errors?.['required']) {
+              <span class="error-msg">❌ 收件人電話不能為空</span>
+            }
+            @if (addressForm.get('phone')?.touched && addressForm.get('phone')?.errors?.['pattern']) {
+              <span class="error-msg">❌ 不合法的電話號碼格式</span>
+            }
+          </div>
+
+          <!-- 郵遞區號 -->
+          <div class="form-group">
+            <label for="postalCode">郵遞區號</label>
+            <input type="text" id="postalCode" formControlName="postalCode" class="form-control" placeholder="例如: 100">
+          </div>
+
+          <!-- 詳細收件地址 -->
+          <div class="form-group">
+            <label for="address">詳細地址 <span class="required">*</span></label>
+            <textarea id="address" formControlName="address" class="form-control" rows="3" placeholder="請輸入完整地址，包含縣市、道路、門牌等"></textarea>
+            @if (addressForm.get('address')?.touched && addressForm.get('address')?.errors?.['required']) {
+              <span class="error-msg">❌ 詳細地址不能為空</span>
+            }
+            @if (addressForm.get('address')?.touched && addressForm.get('address')?.errors?.['minlength']) {
+              <span class="error-msg">❌ 地址內容太短，請完整填寫</span>
+            }
+          </div>
+
+          <!-- 設為預設勾選 -->
+          <div class="form-group checkbox-group">
+            <label class="checkbox-container">
+              <input type="checkbox" formControlName="isDefault">
+              <span class="checkmark"></span>
+              設為預設收件地址
+            </label>
+          </div>
+
+          @if (addressErrorMsg()) {
+            <div class="alert-danger">{{ addressErrorMsg() }}</div>
+          }
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeAddressModal()">取消</button>
+            <button type="submit" class="btn-primary" [disabled]="isSavingAddress() || addressForm.invalid">
+              @if (isSavingAddress()) {
+                <div class="spinner-sm"></div> 正在儲存...
+              } @else {
+                💾 儲存地址
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
