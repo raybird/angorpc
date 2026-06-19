@@ -74,6 +74,44 @@ export class OrdersComponent implements OnInit {
     }
   }
 
+  protected readonly actionLoading = signal<string | null>(null);
+
+  async onCancelOrRefund(orderId: string, currentStatus: string) {
+    const isCancel = currentStatus === 'PENDING';
+    const actionText = isCancel ? '取消訂單' : '申請退款';
+    
+    if (!confirm(`確定要針對此訂單進行「${actionText}」嗎？`)) {
+      return;
+    }
+
+    this.actionLoading.set(orderId);
+    try {
+      const res = await this.orpc.client.order.cancelOrRefundOrder({ orderId });
+      alert(`訂單已成功${isCancel ? '取消' : '退款'}！`);
+      
+      // 清除詳情快取以確保重讀
+      this.detailsCache.delete(orderId);
+      
+      // 更新列表狀態
+      this.orders.update(list => 
+        list.map(o => o.id === orderId ? { ...o, status: res.status as any } : o)
+      );
+
+      // 若目前正展開此訂單明細，同步更新
+      const currentActive = this.activeOrderDetail();
+      if (currentActive && currentActive.id === orderId) {
+        const detail = await this.orpc.client.order.getOrderById({ id: orderId });
+        this.detailsCache.set(orderId, detail);
+        this.activeOrderDetail.set(detail);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(`${actionText}失敗，可能訂單已進入終態或系統連線異常！`);
+    } finally {
+      this.actionLoading.set(null);
+    }
+  }
+
   getStatusClass(status: string): string {
     switch (status) {
       case 'PENDING': return 'status-pending';

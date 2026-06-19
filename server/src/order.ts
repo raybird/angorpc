@@ -10,7 +10,9 @@ import {
   OrderDetailOutputSchema,
   UpdateOrderStatusInputSchema,
   PayOrderInputSchema,
-  PayOrderOutputSchema
+  PayOrderOutputSchema,
+  CancelOrRefundOrderInputSchema,
+  CancelOrRefundOrderOutputSchema
 } from '../../shared/index.js';
 
 /**
@@ -312,6 +314,25 @@ export const getOrderById = os
     };
   });
 
+async function refundOrderStock(tx: any, orderItems: any[]) {
+  for (const item of orderItems) {
+    if (item.variantId) {
+      await tx.productVariant.update({
+        where: { id: item.variantId },
+        data: { stock: { increment: item.quantity } }
+      });
+    } else {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: {
+          stock: { increment: item.quantity },
+          version: { increment: 1 }
+        }
+      });
+    }
+  }
+}
+
 export const updateOrderStatus = os
   .use(authMiddleware)
   .input(UpdateOrderStatusInputSchema)
@@ -321,20 +342,73 @@ export const updateOrderStatus = os
       throw new Error('FORBIDDEN');
     }
 
-    const order = await prisma.order.update({
-      where: { id: input.id },
-      data: {
-        status: input.status,
-      },
-      include: {
-        orderItems: {
+    const order = await prisma.$transaction(async (tx) => {
+      // 1. 查詢現有訂單與明細
+      const oldOrder = await tx.order.findUnique({
+        where: { id: input.id },
+        include: { orderItems: true }
+      });
+
+      if (!oldOrder) {
+        throw new Error('ORDER_NOT_FOUND');
+      }
+
+      const oldStatus = oldOrder.status;
+      const newStatus = input.status;
+
+      if (oldStatus === newStatus) {
+        return tx.order.findUniqueOrThrow({
+          where: { id: input.id },
           include: {
-            product: true,
-            variant: true,
+            orderItems: {
+              include: {
+                product: true,
+                variant: true,
+              },
+            },
+            coupon: true,
           },
+        });
+      }
+
+      // 防禦終態逆流
+      if (oldStatus === 'CANCELLED' || oldStatus === 'REFUNDED') {
+        throw new Error('ORDER_ALREADY_FINALIZED');
+      }
+
+      // 狀態機流轉安全防禦
+      if (oldStatus === 'PENDING' && !['PAID', 'CANCELLED'].includes(newStatus)) {
+        throw new Error('INVALID_STATUS_TRANSITION');
+      }
+      if (oldStatus === 'PAID' && !['SHIPPED', 'REFUNDED'].includes(newStatus)) {
+        throw new Error('INVALID_STATUS_TRANSITION');
+      }
+      if (oldStatus === 'SHIPPED' && !['DELIVERED', 'REFUNDED'].includes(newStatus)) {
+        throw new Error('INVALID_STATUS_TRANSITION');
+      }
+      if (oldStatus === 'DELIVERED' && newStatus !== 'REFUNDED') {
+        throw new Error('INVALID_STATUS_TRANSITION');
+      }
+
+      // 若流轉到取消或退款，退還庫存
+      if (newStatus === 'CANCELLED' || newStatus === 'REFUNDED') {
+        await refundOrderStock(tx, oldOrder.orderItems);
+      }
+
+      // 2. 更新訂單狀態
+      return tx.order.update({
+        where: { id: input.id },
+        data: { status: newStatus },
+        include: {
+          orderItems: {
+            include: {
+              product: true,
+              variant: true,
+            },
+          },
+          coupon: true,
         },
-        coupon: true,
-      },
+      });
     });
 
     const shippingAddress = order.shippingAddress as any;
@@ -465,11 +539,73 @@ export const payOrder = os
     };
   });
 
+/**
+ * 用戶自主取消（PENDING）或申請退款（PAID, SHIPPED, DELIVERED）
+ */
+export const cancelOrRefundOrder = os
+  .use(authMiddleware)
+  .input(CancelOrRefundOrderInputSchema)
+  .output(CancelOrRefundOrderOutputSchema)
+  .handler(async ({ input, context }: { input: z.infer<typeof CancelOrRefundOrderInputSchema>; context: AuthContext }) => {
+    const user = context.user;
+    if (!user) {
+      throw new Error('UNAUTHORIZED');
+    }
+
+    const { orderId } = input;
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. 查詢訂單與明細
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+        include: { orderItems: true },
+      });
+
+      if (!order) {
+        throw new Error('ORDER_NOT_FOUND');
+      }
+
+      // 權限校驗：僅限訂單所有者或管理員
+      if (order.userId !== user.id && user.role !== 'ADMIN') {
+        throw new Error('FORBIDDEN');
+      }
+
+      const currentStatus = order.status;
+      let targetStatus: 'CANCELLED' | 'REFUNDED';
+
+      if (currentStatus === 'PENDING') {
+        targetStatus = 'CANCELLED';
+      } else if (['PAID', 'SHIPPED', 'DELIVERED'].includes(currentStatus)) {
+        targetStatus = 'REFUNDED';
+      } else {
+        throw new Error('ORDER_ALREADY_FINALIZED');
+      }
+
+      // 2. 退還庫存
+      await refundOrderStock(tx, order.orderItems);
+
+      // 3. 更新訂單狀態
+      const updated = await tx.order.update({
+        where: { id: orderId },
+        data: { status: targetStatus },
+      });
+
+      return updated;
+    });
+
+    return {
+      success: true,
+      orderId: result.id,
+      status: result.status,
+    };
+  });
+
 export const orderRouter = {
   createOrder,
   getOrders,
   getOrderById,
   updateOrderStatus,
   payOrder,
+  cancelOrRefundOrder,
 };
 export type OrderRouter = typeof orderRouter;

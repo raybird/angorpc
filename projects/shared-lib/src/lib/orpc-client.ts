@@ -292,6 +292,13 @@ export interface AppRouterClient {
       id: string;
       status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
     }) => Promise<OrderDetail>;
+    cancelOrRefundOrder: (input: {
+      orderId: string;
+    }) => Promise<{
+      success: boolean;
+      orderId: string;
+      status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+    }>;
     payOrder: (input: {
       orderId: string;
       cardNumber: string;

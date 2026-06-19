@@ -497,4 +497,16 @@ export const GetDashboardStatsOutputSchema = z.object({
   })),
 });
 
+// 用戶取消或申請退款輸入 Schema
+export const CancelOrRefundOrderInputSchema = z.object({
+  orderId: z.string().uuid("不合法的訂單 ID 格式"),
+});
+
+// 用戶取消或申請退款輸出 Schema
+export const CancelOrRefundOrderOutputSchema = z.object({
+  success: z.boolean(),
+  orderId: z.string().uuid(),
+  status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+});
+
 
