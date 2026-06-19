@@ -1,0 +1,218 @@
+<div class="payment-container">
+  <!-- 載入中骨架屏 -->
+  @if (isLoadingOrder()) {
+    <div class="glass-card skeleton-container">
+      <div class="skeleton-title"></div>
+      <div class="skeleton-card-mock"></div>
+      <div class="skeleton-input"></div>
+      <div class="skeleton-input"></div>
+    </div>
+  } @else if (orderDetail()) {
+    <div class="payment-content-wrapper">
+      
+      <!-- 左側：訂單詳情與提示資訊 -->
+      <div class="payment-summary-section">
+        <div class="glass-card summary-card">
+          <h2>🏷️ 訂單付款確認</h2>
+          <div class="divider"></div>
+          
+          <div class="summary-details">
+            <div class="detail-row">
+              <span class="label">訂單編號</span>
+              <span class="val order-id-val">{{ orderDetail()?.id }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">收件人</span>
+              <span class="val">{{ orderDetail()?.shippingAddress?.recipientName }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">聯絡電話</span>
+              <span class="val">{{ orderDetail()?.shippingAddress?.phone }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">配送地址</span>
+              <span class="val address-val">{{ orderDetail()?.shippingAddress?.address }}</span>
+            </div>
+          </div>
+          
+          <div class="price-summary">
+            <span class="total-label">應付金額 (NT$)</span>
+            <div class="total-price-box">
+              <span class="currency">NT$</span>
+              <span class="price">{{ orderDetail()?.totalAmount | number:'1.0-2' }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 測試沙盒提示 -->
+        <div class="glass-card sandbox-tips">
+          <h3>🧪 測試沙盒說明</h3>
+          <p>此專案整合了模擬金流支付，您可使用以下卡片資料測試交易情境：</p>
+          <ul>
+            <li><strong>付款成功</strong>：輸入任意合規卡號 (如 <code>4000 1234 5678 9010</code>) 即可通過交易。</li>
+            <li><strong>模擬餘額不足</strong>：卡號尾數輸入 <code>2</code> (如 <code>4000 0000 0000 0002</code>)。</li>
+            <li><strong>模擬安全碼錯誤</strong>：安全碼 (CVV) 輸入 <code>999</code>。</li>
+            <li><strong>模擬卡片過期</strong>：有效期輸入已過期的年份 (如 <code>06/23</code>)。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 右側：3D 卡片與輸入表單 -->
+      <div class="payment-form-section">
+        
+        <!-- 3D 虛擬信用卡容器 -->
+        <div class="card-3d-wrapper">
+          <div class="credit-card" [class.flipped]="isCardFlipped()">
+            
+            <!-- 卡片正面 -->
+            <div class="card-face card-front">
+              <div class="card-header">
+                <span class="card-logo">💳 Premium Card</span>
+                <span class="card-network">VISA</span>
+              </div>
+              <div class="card-chip"></div>
+              <div class="card-number">
+                {{ getFormattedCardNumber() || '•••• •••• •••• ••••' }}
+              </div>
+              <div class="card-footer">
+                <div class="card-holder">
+                  <span class="label">CARD HOLDER</span>
+                  <span class="val">{{ paymentForm.get('cardHolder')?.value || 'YOUR NAME' }}</span>
+                </div>
+                <div class="card-expiry">
+                  <span class="label">EXPIRES</span>
+                  <span class="val">{{ paymentForm.get('expiryDate')?.value || 'MM/YY' }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 卡片背面 -->
+            <div class="card-face card-back">
+              <div class="magnetic-strip"></div>
+              <div class="signature-area">
+                <span class="label">CVV</span>
+                <div class="cvv-box">{{ paymentForm.get('cvv')?.value || '•••' }}</div>
+              </div>
+              <div class="back-logo">AngoRPC Secured</div>
+            </div>
+            
+          </div>
+        </div>
+
+        <!-- 付款表單 -->
+        <div class="glass-card payment-form-card">
+          <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
+            
+            <!-- 錯誤警告旗標 -->
+            @if (errorMessage()) {
+              <div class="error-alert">
+                <span class="icon">⚠️</span>
+                <span class="msg">{{ errorMessage() }}</span>
+              </div>
+            }
+
+            <!-- 持卡人姓名 -->
+            <div class="form-group">
+              <label for="cardHolder">持卡人姓名</label>
+              <input 
+                id="cardHolder" 
+                type="text" 
+                formControlName="cardHolder"
+                placeholder="例如: RAYBIRD" 
+                [class.invalid]="f.cardHolder.touched && f.cardHolder.invalid"
+              />
+              @if (f.cardHolder.touched && f.cardHolder.errors?.['required']) {
+                <span class="error-msg">請填寫持卡人姓名</span>
+              }
+            </div>
+
+            <!-- 卡號 -->
+            <div class="form-group">
+              <label for="cardNumber">信用卡卡號</label>
+              <input 
+                id="cardNumber" 
+                type="text" 
+                formControlName="cardNumber"
+                (input)="onCardNumberInput($event)"
+                placeholder="4000 1234 5678 9010" 
+                [class.invalid]="f.cardNumber.touched && f.cardNumber.invalid"
+              />
+              @if (f.cardNumber.touched && f.cardNumber.invalid) {
+                <span class="error-msg">請輸入正確的 16 位信用卡卡號</span>
+              }
+            </div>
+
+            <!-- 有效期與安全碼雙欄並排 -->
+            <div class="form-row">
+              <div class="form-group half-width">
+                <label for="expiryDate">有效期限 (MM/YY)</label>
+                <input 
+                  id="expiryDate" 
+                  type="text" 
+                  formControlName="expiryDate"
+                  (input)="onExpiryInput($event)"
+                  placeholder="12/28" 
+                  [class.invalid]="f.expiryDate.touched && f.expiryDate.invalid"
+                />
+                @if (f.expiryDate.touched && f.expiryDate.invalid) {
+                  <span class="error-msg">格式需為 MM/YY (例如 12/28)</span>
+                }
+              </div>
+
+              <div class="form-group half-width">
+                <label for="cvv">安全碼 (CVV)</label>
+                <input 
+                  id="cvv" 
+                  type="text" 
+                  formControlName="cvv"
+                  (input)="onCvvInput($event)"
+                  (focus)="isCardFlipped.set(true)"
+                  (blur)="isCardFlipped.set(false)"
+                  placeholder="123" 
+                  [class.invalid]="f.cvv.touched && f.cvv.invalid"
+                />
+                @if (f.cvv.touched && f.cvv.invalid) {
+                  <span class="error-msg">格式需為 3 位安全碼</span>
+                }
+              </div>
+            </div>
+
+            <!-- 提交與進度指示器 -->
+            <button 
+              type="submit" 
+              class="btn-pay-submit" 
+              [disabled]="isSubmitting() || paymentSuccess()"
+            >
+              @if (isSubmitting()) {
+                <span class="spinner"></span>
+                <span>金流授權中...</span>
+              } @else {
+                <span>🔒 安全確認付款 NT$ {{ orderDetail()?.totalAmount | number:'1.0-2' }}</span>
+              }
+            </button>
+            
+          </form>
+        </div>
+
+      </div>
+      
+    </div>
+  }
+
+  <!-- 付款成功覆蓋畫面與打勾動畫 -->
+  @if (paymentSuccess()) {
+    <div class="success-overlay">
+      <div class="success-box glass-card">
+        <div class="checkmark-wrapper">
+          <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+        <h2>🎉 付款成功！</h2>
+        <p>我們已收到您的款項，訂單狀態已更新為已付款 (PAID)。</p>
+        <p class="redirect-hint">正在將您導向至歷史訂單追蹤頁面 (3秒後自動轉跳)...</p>
+      </div>
+    </div>
+  }
+</div>

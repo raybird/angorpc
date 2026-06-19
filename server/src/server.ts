@@ -42,6 +42,7 @@ app.all('/api/rpc/*', async (req, res) => {
   try {
     const webRes = await fetchHandler({
       request: webReq,
+      prefix: '/api/rpc',
       context: {
         authorization: req.headers.authorization,
       }

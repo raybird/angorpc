@@ -18,6 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./checkout/checkout').then(m => m.CheckoutComponent),
   },
   {
+    path: 'checkout/payment/:orderId',
+    loadComponent: () => import('./checkout/payment/payment').then(m => m.PaymentComponent),
+  },
+  {
     path: 'orders',
     loadComponent: () => import('./orders/orders').then(m => m.OrdersComponent),
   },

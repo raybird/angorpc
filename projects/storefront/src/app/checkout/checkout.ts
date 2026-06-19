@@ -168,8 +168,7 @@ export class CheckoutComponent implements OnInit {
       await this.cartState.fetchCart();
       this.removeCoupon();
 
-      alert(`訂單下單成功！訂單編號：\n${res.orderId}`);
-      this.router.navigate(['/orders']);
+      this.router.navigate(['/checkout/payment', res.orderId]);
     } catch (err: any) {
       console.error(err);
       if (err.message === 'INSUFFICIENT_STOCK') {

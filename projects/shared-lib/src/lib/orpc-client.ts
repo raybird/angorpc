@@ -216,6 +216,18 @@ export interface AppRouterClient {
       id: string;
       status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
     }) => Promise<OrderDetail>;
+    payOrder: (input: {
+      orderId: string;
+      cardNumber: string;
+      cardHolder: string;
+      expiryDate: string;
+      cvv: string;
+    }) => Promise<{
+      success: boolean;
+      orderId: string;
+      status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+      errorMessage?: string;
+    }>;
   };
   coupon: {
     validateCoupon: (input: {

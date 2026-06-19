@@ -380,4 +380,21 @@ export const UserStatsOutputSchema = z.object({
   totalSpent: z.number(),
 });
 
+// 支付訂單輸入 Schema
+export const PayOrderInputSchema = z.object({
+  orderId: z.string().uuid("不合法的訂單 ID 格式"),
+  cardNumber: z.string().regex(/^[0-9]{16}$/, "信用卡號必須為 16 位數字"),
+  cardHolder: z.string().min(1, "持卡人姓名不能為空"),
+  expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/([0-9]{2})$/, "有效期格式必須為 MM/YY"),
+  cvv: z.string().regex(/^[0-9]{3}$/, "安全碼必須為 3 位數字"),
+});
+
+// 支付訂單輸出 Schema
+export const PayOrderOutputSchema = z.object({
+  success: z.boolean(),
+  orderId: z.string().uuid(),
+  status: z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+  errorMessage: z.string().optional(),
+});
+
 

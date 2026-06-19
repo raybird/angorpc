@@ -426,3 +426,23 @@ export declare const UserStatsOutputSchema: z.ZodObject<{
     totalOrders: z.ZodNumber;
     totalSpent: z.ZodNumber;
 }, z.core.$strip>;
+export declare const PayOrderInputSchema: z.ZodObject<{
+    orderId: z.ZodString;
+    cardNumber: z.ZodString;
+    cardHolder: z.ZodString;
+    expiryDate: z.ZodString;
+    cvv: z.ZodString;
+}, z.core.$strip>;
+export declare const PayOrderOutputSchema: z.ZodObject<{
+    success: z.ZodBoolean;
+    orderId: z.ZodString;
+    status: z.ZodEnum<{
+        PENDING: "PENDING";
+        PAID: "PAID";
+        SHIPPED: "SHIPPED";
+        DELIVERED: "DELIVERED";
+        CANCELLED: "CANCELLED";
+        REFUNDED: "REFUNDED";
+    }>;
+    errorMessage: z.ZodOptional<z.ZodString>;
+}, z.core.$strip>;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserStatsOutputSchema = exports.UpdateUserRoleInputSchema = exports.GetUsersOutputSchema = exports.GetUsersInputSchema = exports.UpdateOrderStatusInputSchema = exports.GetCategoriesOutputSchema = exports.OrderDetailOutputSchema = exports.GetOrdersOutputSchema = exports.GetOrdersInputSchema = exports.UpdateCouponInputSchema = exports.CreateCouponInputSchema = exports.GetCouponsOutputSchema = exports.GetCouponsInputSchema = exports.ValidateCouponOutputSchema = exports.ValidateCouponInputSchema = exports.CouponSchema = exports.CreateOrderOutputSchema = exports.CreateOrderInputSchema = exports.AddressSchema = exports.GetCartOutputSchema = exports.RemoveCartItemInputSchema = exports.UpdateCartItemInputSchema = exports.AddCartItemInputSchema = exports.CartItemSchema = exports.UpdateProductInputSchema = exports.CreateProductInputSchema = exports.ProductDetailOutputSchema = exports.GetProductsOutputSchema = exports.GetProductsInputSchema = exports.ProductSchema = exports.ProfileOutputSchema = exports.RegisterOutputSchema = exports.RegisterInputSchema = exports.LoginOutputSchema = exports.LoginInputSchema = exports.HelloOutputSchema = exports.HelloInputSchema = void 0;
+exports.PayOrderOutputSchema = exports.PayOrderInputSchema = exports.UserStatsOutputSchema = exports.UpdateUserRoleInputSchema = exports.GetUsersOutputSchema = exports.GetUsersInputSchema = exports.UpdateOrderStatusInputSchema = exports.GetCategoriesOutputSchema = exports.OrderDetailOutputSchema = exports.GetOrdersOutputSchema = exports.GetOrdersInputSchema = exports.UpdateCouponInputSchema = exports.CreateCouponInputSchema = exports.GetCouponsOutputSchema = exports.GetCouponsInputSchema = exports.ValidateCouponOutputSchema = exports.ValidateCouponInputSchema = exports.CouponSchema = exports.CreateOrderOutputSchema = exports.CreateOrderInputSchema = exports.AddressSchema = exports.GetCartOutputSchema = exports.RemoveCartItemInputSchema = exports.UpdateCartItemInputSchema = exports.AddCartItemInputSchema = exports.CartItemSchema = exports.UpdateProductInputSchema = exports.CreateProductInputSchema = exports.ProductDetailOutputSchema = exports.GetProductsOutputSchema = exports.GetProductsInputSchema = exports.ProductSchema = exports.ProfileOutputSchema = exports.RegisterOutputSchema = exports.RegisterInputSchema = exports.LoginOutputSchema = exports.LoginInputSchema = exports.HelloOutputSchema = exports.HelloInputSchema = void 0;
 const zod_1 = require("zod");
 // Hello World 驗證 Schema
 exports.HelloInputSchema = zod_1.z.object({
@@ -344,4 +344,19 @@ exports.UpdateUserRoleInputSchema = zod_1.z.object({
 exports.UserStatsOutputSchema = zod_1.z.object({
     totalOrders: zod_1.z.number(),
     totalSpent: zod_1.z.number(),
+});
+// 支付訂單輸入 Schema
+exports.PayOrderInputSchema = zod_1.z.object({
+    orderId: zod_1.z.string().uuid("不合法的訂單 ID 格式"),
+    cardNumber: zod_1.z.string().regex(/^[0-9]{16}$/, "信用卡號必須為 16 位數字"),
+    cardHolder: zod_1.z.string().min(1, "持卡人姓名不能為空"),
+    expiryDate: zod_1.z.string().regex(/^(0[1-9]|1[0-2])\/([0-9]{2})$/, "有效期格式必須為 MM/YY"),
+    cvv: zod_1.z.string().regex(/^[0-9]{3}$/, "安全碼必須為 3 位數字"),
+});
+// 支付訂單輸出 Schema
+exports.PayOrderOutputSchema = zod_1.z.object({
+    success: zod_1.z.boolean(),
+    orderId: zod_1.z.string().uuid(),
+    status: zod_1.z.enum(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+    errorMessage: zod_1.z.string().optional(),
 });

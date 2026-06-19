@@ -8,7 +8,9 @@ import {
   GetOrdersInputSchema,
   GetOrdersOutputSchema,
   OrderDetailOutputSchema,
-  UpdateOrderStatusInputSchema
+  UpdateOrderStatusInputSchema,
+  PayOrderInputSchema,
+  PayOrderOutputSchema
 } from '../../shared/index.js';
 
 /**
@@ -324,10 +326,101 @@ export const updateOrderStatus = os
     };
   });
 
+/**
+ * 支付訂單 (模擬金流整合)
+ */
+export const payOrder = os
+  .use(authMiddleware)
+  .input(PayOrderInputSchema)
+  .output(PayOrderOutputSchema)
+  .handler(async ({ input, context }: { input: z.infer<typeof PayOrderInputSchema>; context: AuthContext }) => {
+    if (!context.user) {
+      throw new Error('UNAUTHORIZED');
+    }
+
+    const { orderId, cardNumber, cardHolder, expiryDate, cvv } = input;
+
+    // 1. 查詢訂單
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!order) {
+      throw new Error('ORDER_NOT_FOUND');
+    }
+
+    // 2. 權限防禦：僅限訂單所有者本人支付
+    if (order.userId !== context.user.id) {
+      throw new Error('FORBIDDEN');
+    }
+
+    // 3. 狀態機防禦：僅能支付 PENDING 訂單
+    if (order.status !== 'PENDING') {
+      return {
+        success: false,
+        orderId: order.id,
+        status: order.status,
+        errorMessage: '此訂單已完成付款或已取消，無法重複付款。',
+      };
+    }
+
+    // 4. 模擬金流規則校驗
+    // 規則 A：過期的卡片 (expiryDate: MM/YY)
+    const [monthStr, yearStr] = expiryDate.split('/');
+    const month = parseInt(monthStr, 10);
+    const year = 2000 + parseInt(yearStr, 10);
+    const now = new Date();
+    // 取得當月最後一天
+    const expiry = new Date(year, month, 0, 23, 59, 59);
+    if (expiry < now) {
+      return {
+        success: false,
+        orderId: order.id,
+        status: order.status,
+        errorMessage: '卡片已過期 (CARD_EXPIRED)。',
+      };
+    }
+
+    // 規則 B：安全碼為 999 模擬安全碼錯誤
+    if (cvv === '999') {
+      return {
+        success: false,
+        orderId: order.id,
+        status: order.status,
+        errorMessage: '安全碼錯誤 (INVALID_CVV)。',
+      };
+    }
+
+    // 規則 C：卡號尾數為 2 模擬餘額不足
+    if (cardNumber.endsWith('2')) {
+      return {
+        success: false,
+        orderId: order.id,
+        status: order.status,
+        errorMessage: '餘額不足，請更換卡片重試 (INSUFFICIENT_FUNDS)。',
+      };
+    }
+
+    // 5. 扣款成功，更新訂單狀態為 PAID
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'PAID',
+      },
+    });
+
+    return {
+      success: true,
+      orderId: updatedOrder.id,
+      status: updatedOrder.status,
+    };
+  });
+
 export const orderRouter = {
   createOrder,
   getOrders,
   getOrderById,
   updateOrderStatus,
+  payOrder,
 };
 export type OrderRouter = typeof orderRouter;
