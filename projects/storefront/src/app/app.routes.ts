@@ -2,6 +2,16 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
+    path: '',
+    pathMatch: 'full',
+    children: [],
+  },
+  {
+    path: 'home',
+    pathMatch: 'full',
+    redirectTo: '',
+  },
+  {
     path: 'login',
     loadComponent: () => import('./login/login').then(m => m.LoginComponent),
   },
@@ -34,5 +44,4 @@ export const routes: Routes = [
     loadComponent: () => import('./product-detail/product-detail').then(m => m.ProductDetailComponent),
   },
 ];
-
 

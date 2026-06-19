@@ -59,7 +59,7 @@
             "server": "projects/storefront/src/main.server.ts",
             "outputMode": "server",
             "security": {
-              "allowedHosts": []
+              "allowedHosts": ["localhost", "127.0.0.1", "0.0.0.0", "storefront"]
             },
             "ssr": {
               "entry": "projects/storefront/src/server.ts"

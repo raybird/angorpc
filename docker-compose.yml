@@ -11,11 +11,50 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d angorpc"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+
+  backend:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/angorpc?schema=public
+      - JWT_SECRET=supersecretjwtkeyforangorpcbackendserverdevmode
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  storefront:
+    build:
+      context: .
+      dockerfile: projects/storefront/Dockerfile
+    environment:
+      - API_URL=http://backend:3000/api/rpc
+      - PORT=4200
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
+
+  admin-portal:
+    build:
+      context: .
+      dockerfile: projects/admin-portal/Dockerfile
+    ports:
+      - "4201:4201"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

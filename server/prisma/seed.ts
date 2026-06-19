@@ -1,9 +1,25 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('開始進行資料庫播種 (Seeding)...');
+
+  // 0. 建立預設管理員
+  const adminPasswordHash = await bcrypt.hash('admin123', 10);
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@angorpc.com' },
+    update: {},
+    create: {
+      email: 'admin@angorpc.com',
+      passwordHash: adminPasswordHash,
+      firstName: 'System',
+      lastName: 'Admin',
+      role: 'ADMIN',
+    },
+  });
+  console.log('預設管理員建立完成:', adminUser.email);
 
   // Clean old data (mind foreign key dependencies)
   await prisma.orderItem.deleteMany({});

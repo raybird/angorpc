@@ -363,8 +363,18 @@ export interface AppRouterClient {
   providedIn: 'root'
 })
 export class OrpcClientService {
+  private getApiUrl(): string {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      return `http://${host}:3000/api/rpc`;
+    } else {
+      const globalProcess = (globalThis as any).process;
+      return (globalProcess && globalProcess.env ? globalProcess.env['API_URL'] : '') || 'http://localhost:3000/api/rpc';
+    }
+  }
+
   private link = new RPCLink({
-    url: 'http://localhost:3000/api/rpc',
+    url: this.getApiUrl(),
     headers: () => {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token');
