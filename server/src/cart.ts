@@ -10,32 +10,43 @@ import {
 } from '../../shared/index.js';
 
 /**
- * 查詢用戶購物車輔助函式
+ * 查詢用戶購物車輔助函式 (包含商品變體規格)
  */
 async function getCartHelper(userId: string) {
   const items = await prisma.cartItem.findMany({
     where: { userId },
     include: {
       product: true,
+      variant: true,
     },
     orderBy: { createdAt: 'asc' },
   });
 
-  const formattedItems = items.map((item) => ({
-    id: item.id,
-    userId: item.userId,
-    productId: item.productId,
-    quantity: item.quantity,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-    product: {
-      ...item.product,
-      price: Number(item.product.price),
-    },
-  }));
+  const formattedItems = items.map((item) => {
+    return {
+      id: item.id,
+      userId: item.userId,
+      productId: item.productId,
+      variantId: item.variantId,
+      quantity: item.quantity,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      product: {
+        ...item.product,
+        price: Number(item.product.price),
+      },
+      variant: item.variant ? {
+        ...item.variant,
+        price: Number(item.variant.price),
+        attributes: item.variant.attributes as Record<string, any>,
+      } : null,
+    };
+  });
 
   const totalPrice = formattedItems.reduce((sum, item) => {
-    return sum + item.quantity * item.product.price;
+    // 優先使用變體價格，若無變體則使用商品原價
+    const itemPrice = item.variant ? item.variant.price : item.product.price;
+    return sum + item.quantity * itemPrice;
   }, 0);
 
   return {
@@ -68,7 +79,8 @@ export const addItem = os
     if (!context.user) {
       throw new Error('UNAUTHORIZED');
     }
-    const { productId, quantity } = input;
+    const { productId, variantId, quantity } = input;
+    const resolvedVariantId = variantId || null;
 
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -78,18 +90,29 @@ export const addItem = os
       throw new Error('PRODUCT_NOT_FOUND');
     }
 
-    const existing = await prisma.cartItem.findUnique({
+    // 檢查變體規格是否存在且有足夠庫存
+    let availableStock = product.stock;
+    if (resolvedVariantId) {
+      const variant = await prisma.productVariant.findUnique({
+        where: { id: resolvedVariantId }
+      });
+      if (!variant || variant.productId !== productId) {
+        throw new Error('VARIANT_NOT_FOUND');
+      }
+      availableStock = variant.stock;
+    }
+
+    const existing = await prisma.cartItem.findFirst({
       where: {
-        userId_productId: {
-          userId: context.user.id,
-          productId,
-        },
+        userId: context.user.id,
+        productId,
+        variantId: resolvedVariantId,
       },
     });
 
     const newQuantity = existing ? existing.quantity + quantity : quantity;
 
-    if (newQuantity > product.stock) {
+    if (newQuantity > availableStock) {
       throw new Error('INSUFFICIENT_STOCK');
     }
 
@@ -103,6 +126,7 @@ export const addItem = os
         data: {
           userId: context.user.id,
           productId,
+          variantId: resolvedVariantId,
           quantity: newQuantity,
         },
       });
@@ -122,7 +146,8 @@ export const updateItem = os
     if (!context.user) {
       throw new Error('UNAUTHORIZED');
     }
-    const { productId, quantity } = input;
+    const { productId, variantId, quantity } = input;
+    const resolvedVariantId = variantId || null;
 
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -132,16 +157,27 @@ export const updateItem = os
       throw new Error('PRODUCT_NOT_FOUND');
     }
 
-    if (quantity > product.stock) {
+    // 庫存檢驗
+    let availableStock = product.stock;
+    if (resolvedVariantId) {
+      const variant = await prisma.productVariant.findUnique({
+        where: { id: resolvedVariantId }
+      });
+      if (!variant || variant.productId !== productId) {
+        throw new Error('VARIANT_NOT_FOUND');
+      }
+      availableStock = variant.stock;
+    }
+
+    if (quantity > availableStock) {
       throw new Error('INSUFFICIENT_STOCK');
     }
 
-    const existing = await prisma.cartItem.findUnique({
+    const existing = await prisma.cartItem.findFirst({
       where: {
-        userId_productId: {
-          userId: context.user.id,
-          productId,
-        },
+        userId: context.user.id,
+        productId,
+        variantId: resolvedVariantId,
       },
     });
 
@@ -168,14 +204,14 @@ export const removeItem = os
     if (!context.user) {
       throw new Error('UNAUTHORIZED');
     }
-    const { productId } = input;
+    const { productId, variantId } = input;
+    const resolvedVariantId = variantId || null;
 
-    const existing = await prisma.cartItem.findUnique({
+    const existing = await prisma.cartItem.findFirst({
       where: {
-        userId_productId: {
-          userId: context.user.id,
-          productId,
-        },
+        userId: context.user.id,
+        productId,
+        variantId: resolvedVariantId,
       },
     });
 

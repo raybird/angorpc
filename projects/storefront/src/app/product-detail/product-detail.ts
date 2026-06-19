@@ -24,14 +24,77 @@ export class ProductDetailComponent implements OnInit {
   protected readonly errorOccurred = signal<boolean>(false);
   protected readonly isAddingToCart = signal<boolean>(false);
 
+  // 已選規格屬性，例如 {"Color": "Blue", "Size": "L"}
+  protected readonly selectedAttributes = signal<{ [key: string]: string }>({});
+
   // 登入狀態對齊
   protected readonly isAuthenticated = this.authState.isAuthenticated;
 
+  // 整理商品變體規格的所有維度與其所有不重複的值
+  protected readonly availableSpecs = computed(() => {
+    const prod = this.product();
+    if (!prod || !prod.variants || prod.variants.length === 0) {
+      return [];
+    }
+    const specsMap: { [key: string]: Set<string> } = {};
+    prod.variants.forEach((v: any) => {
+      if (v.attributes) {
+        Object.keys(v.attributes).forEach((key) => {
+          if (!specsMap[key]) {
+            specsMap[key] = new Set<string>();
+          }
+          specsMap[key].add(v.attributes[key]);
+        });
+      }
+    });
+    return Object.keys(specsMap).map((key) => ({
+      key,
+      values: Array.from(specsMap[key])
+    }));
+  });
+
+  // 目前匹配到的商品變體
+  protected readonly currentVariant = computed(() => {
+    const prod = this.product();
+    const selected = this.selectedAttributes();
+    if (!prod || !prod.variants || prod.variants.length === 0) {
+      return null;
+    }
+    const specKeys = this.availableSpecs().map((s) => s.key);
+    const isAllSelected = specKeys.every((k) => selected[k] !== undefined);
+    if (!isAllSelected) {
+      return null;
+    }
+    return (
+      prod.variants.find((v: any) => {
+        return specKeys.every((k) => v.attributes[k] === selected[k]);
+      }) || null
+    );
+  });
+
+  // 動態顯示單價
+  protected readonly displayedPrice = computed(() => {
+    const prod = this.product();
+    const variant = this.currentVariant();
+    if (variant) {
+      return variant.price;
+    }
+    return prod ? prod.price : 0;
+  });
+
+  // 動態顯示庫存
+  protected readonly displayedStock = computed(() => {
+    const prod = this.product();
+    const variant = this.currentVariant();
+    if (variant) {
+      return variant.stock;
+    }
+    return prod ? prod.stock : 0;
+  });
+
   // 計算小計金額
   protected readonly subtotal = computed(() => {
-    const prod = this.product();
-    if (!prod) return 0;
-    return prod.price * this.quantity();
+    return this.displayedPrice() * this.quantity();
   });
 
   async ngOnInit() {
@@ -56,6 +119,7 @@ export class ProductDetailComponent implements OnInit {
       const detail = await this.orpc.client.product.getProductById({ slug });
       this.product.set(detail);
       this.quantity.set(1); // 重置數量為 1
+      this.selectedAttributes.set({}); // 重置規格選擇
     } catch (err) {
       console.error('Failed to fetch product detail:', err);
       this.errorOccurred.set(true);
@@ -65,12 +129,22 @@ export class ProductDetailComponent implements OnInit {
   }
 
   /**
-   * 購買數量增加 (最高不能超過商品庫存)
+   * 選擇規格選項
+   */
+  protected selectAttribute(key: string, value: string) {
+    this.selectedAttributes.update((current) => ({
+      ...current,
+      [key]: value,
+    }));
+    this.quantity.set(1); // 每次切換規格，數量重設為 1
+  }
+
+  /**
+   * 購買數量增加 (最高不能超過當前顯示庫存)
    */
   protected onIncreaseQty() {
-    const prod = this.product();
-    if (!prod) return;
-    if (this.quantity() < prod.stock) {
+    const maxStock = this.displayedStock();
+    if (this.quantity() < maxStock) {
       this.quantity.update(q => q + 1);
     }
   }
@@ -97,15 +171,24 @@ export class ProductDetailComponent implements OnInit {
       return;
     }
 
-    if (prod.stock <= 0) {
-      alert('該商品已無庫存，無法加入購物車！');
+    // 檢查變體是否已選齊
+    const hasVariants = prod.variants && prod.variants.length > 0;
+    const variant = this.currentVariant();
+    if (hasVariants && !variant) {
+      alert('請選擇完整的商品規格選項！');
+      return;
+    }
+
+    const maxStock = this.displayedStock();
+    if (maxStock <= 0) {
+      alert('該規格商品已無庫存，無法加入購物車！');
       return;
     }
 
     this.isAddingToCart.set(true);
     try {
-      await this.cartState.addItem(prod.id, this.quantity());
-      alert(`已成功將 ${this.quantity()} 件「${prod.name}」加入購物車！`);
+      await this.cartState.addItem(prod.id, this.quantity(), variant?.id || null);
+      alert(`已成功將 ${this.quantity()} 件「${prod.name}${variant ? ' (' + variant.name + ')' : ''}」加入購物車！`);
       this.quantity.set(1); // 成功後重設為 1
     } catch (err) {
       console.error('Failed to add item to cart:', err);

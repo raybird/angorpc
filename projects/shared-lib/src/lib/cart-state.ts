@@ -55,13 +55,13 @@ export class CartStateService {
   /**
    * 加入商品至購物車
    */
-  async addItem(productId: string, quantity: number = 1) {
+  async addItem(productId: string, quantity: number = 1, variantId?: string | null) {
     if (!this.isBrowser) return;
     if (!this.auth.isAuthenticated()) {
       throw new Error('UNAUTHORIZED');
     }
     try {
-      const res = await this.orpc.client.cart.addItem({ productId, quantity });
+      const res = await this.orpc.client.cart.addItem({ productId, quantity, variantId });
       this.cartItems.set(res.items);
       this.totalPrice.set(res.totalPrice);
     } catch (err) {
@@ -73,11 +73,11 @@ export class CartStateService {
   /**
    * 更新商品數量
    */
-  async updateQuantity(productId: string, quantity: number) {
+  async updateQuantity(productId: string, quantity: number, variantId?: string | null) {
     if (!this.isBrowser) return;
     if (!this.auth.isAuthenticated()) return;
     try {
-      const res = await this.orpc.client.cart.updateItem({ productId, quantity });
+      const res = await this.orpc.client.cart.updateItem({ productId, quantity, variantId });
       this.cartItems.set(res.items);
       this.totalPrice.set(res.totalPrice);
     } catch (err) {
@@ -89,11 +89,11 @@ export class CartStateService {
   /**
    * 移除商品
    */
-  async removeItem(productId: string) {
+  async removeItem(productId: string, variantId?: string | null) {
     if (!this.isBrowser) return;
     if (!this.auth.isAuthenticated()) return;
     try {
-      const res = await this.orpc.client.cart.removeItem({ productId });
+      const res = await this.orpc.client.cart.removeItem({ productId, variantId });
       this.cartItems.set(res.items);
       this.totalPrice.set(res.totalPrice);
     } catch (err) {

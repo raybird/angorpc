@@ -58,7 +58,10 @@
           <!-- 價格展示 -->
           <div class="price-section">
             <span class="currency">NT$</span>
-            <span class="price-val">{{ product().price | number:'1.0-0' }}</span>
+            <span class="price-val">{{ displayedPrice() | number:'1.0-0' }}</span>
+            @if (product().variants && product().variants.length > 0 && !currentVariant()) {
+              <span class="price-suffix">起</span>
+            }
           </div>
 
           <!-- 商品描述 -->
@@ -67,18 +70,41 @@
             <p>{{ product().description || '此商品暫無詳細描述說明。' }}</p>
           </div>
 
+          <!-- 規格變體選擇區 -->
+          @if (availableSpecs().length > 0) {
+            <div class="spec-section">
+              @for (spec of availableSpecs(); track spec.key) {
+                <div class="spec-row">
+                  <span class="spec-label">{{ spec.key }}</span>
+                  <div class="spec-options">
+                    @for (val of spec.values; track val) {
+                      <button
+                        type="button"
+                        class="spec-opt-btn"
+                        [class.active]="selectedAttributes()[spec.key] === val"
+                        (click)="selectAttribute(spec.key, val)"
+                      >
+                        {{ val }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
           <!-- 庫存狀態與限制 -->
           <div class="stock-section">
-            @if (product().stock <= 0) {
+            @if (displayedStock() <= 0) {
               <span class="stock-status out-of-stock">❌ 已售罄 (Out of Stock)</span>
-            } @else if (product().stock < 10) {
-              <span class="stock-status low-stock">⚠️ 僅剩 {{ product().stock }} 件！欲購從速</span>
+            } @else if (displayedStock() < 10) {
+              <span class="stock-status low-stock">⚠️ 僅剩 {{ displayedStock() }} 件！欲購從速</span>
             } @else {
-              <span class="stock-status in-stock">✅ 庫存充裕 (餘 {{ product().stock }} 件)</span>
+              <span class="stock-status in-stock">✅ 庫存充裕 (餘 {{ displayedStock() }} 件)</span>
             }
           </div>
 
-          @if (product().stock > 0) {
+          @if (displayedStock() > 0) {
             <!-- 購買數量選擇器 -->
             <div class="quantity-section">
               <span class="section-label">購買數量</span>
@@ -94,7 +120,7 @@
                   type="button" 
                   class="qty-btn" 
                   (click)="onIncreaseQty()" 
-                  [disabled]="quantity() >= product().stock"
+                  [disabled]="quantity() >= displayedStock()"
                 >+</button>
               </div>
             </div>
@@ -111,11 +137,11 @@
               type="button" 
               class="btn-add-cart" 
               (click)="onAddToCart()" 
-              [disabled]="product().stock <= 0 || isAddingToCart()"
+              [disabled]="displayedStock() <= 0 || isAddingToCart()"
             >
               @if (isAddingToCart()) {
                 <span>正在加入購物車...</span>
-              } @else if (product().stock <= 0) {
+              } @else if (displayedStock() <= 0) {
                 <span>🚫 已售罄</span>
               } @else {
                 <span>🛒 加入購物車</span>

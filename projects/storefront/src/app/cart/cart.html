@@ -36,7 +36,7 @@
             <!-- 購物車項目列表 -->
             <div class="cart-items-list">
               @for (item of cartState.cartItems(); track item.id) {
-                <div class="cart-item-card" [class.updating]="isUpdating() === item.productId">
+                <div class="cart-item-card" [class.updating]="isUpdating() === item.id">
                   <!-- 商品簡介圖 (SVG 裝飾) -->
                   <div class="item-img-placeholder">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -46,39 +46,42 @@
 
                   <div class="item-info">
                     <h4 class="item-name">{{ item.product.name }}</h4>
-                    <p class="item-stock">庫存剩餘: {{ item.product.stock }}</p>
+                    @if (item.variant) {
+                      <p class="item-variant" style="font-size: 0.8rem; color: #a855f7; margin-top: 0.25rem;">規格: {{ item.variant.name }}</p>
+                    }
+                    <p class="item-stock">庫存剩餘: {{ item.variant ? item.variant.stock : item.product.stock }}</p>
                   </div>
 
                   <div class="item-price">
                     <span class="price-label">單價</span>
-                    <span class="price-value">${{ item.product.price | number:'1.2-2' }}</span>
+                    <span class="price-value">${{ (item.variant ? item.variant.price : item.product.price) | number:'1.2-2' }}</span>
                   </div>
 
                   <!-- 數量調節器 -->
                   <div class="item-quantity-control">
                     <button 
                       class="qty-btn" 
-                      (click)="onUpdateQuantity(item.productId, item.quantity, -1)"
+                      (click)="onUpdateQuantity(item.productId, item.quantity, -1, item.variantId, item.id)"
                       [disabled]="isUpdating() !== null"
                     >-</button>
-                    <span class="qty-value">{{ item.quantity }}</span>
+                    <span class="qty-val">{{ item.quantity }}</span>
                     <button 
                       class="qty-btn" 
-                      (click)="onUpdateQuantity(item.productId, item.quantity, 1)"
-                      [disabled]="isUpdating() !== null || item.quantity >= item.product.stock"
+                      (click)="onUpdateQuantity(item.productId, item.quantity, 1, item.variantId, item.id)"
+                      [disabled]="isUpdating() !== null || item.quantity >= (item.variant ? item.variant.stock : item.product.stock)"
                     >+</button>
                   </div>
 
                   <!-- 小計 -->
                   <div class="item-subtotal">
                     <span class="price-label">小計</span>
-                    <span class="price-value">${{ (item.product.price * item.quantity) | number:'1.2-2' }}</span>
+                    <span class="price-value">${{ ((item.variant ? item.variant.price : item.product.price) * item.quantity) | number:'1.2-2' }}</span>
                   </div>
 
                   <!-- 移除按鈕 -->
                   <button 
                     class="btn-remove" 
-                    (click)="onRemoveItem(item.productId)"
+                    (click)="onRemoveItem(item.productId, item.variantId, item.id)"
                     [disabled]="isUpdating() !== null"
                     title="移除商品"
                   >

@@ -181,9 +181,12 @@
                   <div class="summary-item">
                     <div class="item-details">
                       <span class="item-name">{{ item.product.name }}</span>
+                      @if (item.variant) {
+                        <span class="item-variant" style="font-size: 0.75rem; color: #a855f7; display: block; margin-top: 0.1rem;">規格: {{ item.variant.name }}</span>
+                      }
                       <span class="item-qty">x {{ item.quantity }}</span>
                     </div>
-                    <span class="item-price">${{ (item.product.price * item.quantity) | number:'1.2-2' }}</span>
+                    <span class="item-price">${{ ((item.variant ? item.variant.price : item.product.price) * item.quantity) | number:'1.2-2' }}</span>
                   </div>
                 }
               </div>

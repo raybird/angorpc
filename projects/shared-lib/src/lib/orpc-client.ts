@@ -11,6 +11,18 @@ export interface User {
   phone?: string | null;
 }
 
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  sku: string | null;
+  name: string;
+  price: number;
+  stock: number;
+  attributes: Record<string, any>;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -21,16 +33,19 @@ export interface Product {
   stock: number;
   isActive: boolean;
   createdAt: string | Date;
+  variants?: ProductVariant[];
 }
 
 export interface CartItem {
   id: string;
   userId: string;
   productId: string;
+  variantId?: string | null;
   quantity: number;
   createdAt: string | Date;
   updatedAt: string | Date;
   product: Product;
+  variant?: ProductVariant | null;
 }
 
 export interface Address {
@@ -62,7 +77,9 @@ export interface Order {
 export interface OrderItemDetail {
   id: string;
   productId: string;
+  variantId?: string | null;
   name: string;
+  variantName?: string | null;
   price: number;
   quantity: number;
 }
@@ -241,15 +258,15 @@ export interface AppRouterClient {
   };
   cart: {
     getCart: () => Promise<{ items: CartItem[]; totalPrice: number }>;
-    addItem: (input: { productId: string; quantity?: number }) => Promise<{ items: CartItem[]; totalPrice: number }>;
-    updateItem: (input: { productId: string; quantity: number }) => Promise<{ items: CartItem[]; totalPrice: number }>;
-    removeItem: (input: { productId: string }) => Promise<{ items: CartItem[]; totalPrice: number }>;
+    addItem: (input: { productId: string; variantId?: string | null; quantity?: number }) => Promise<{ items: CartItem[]; totalPrice: number }>;
+    updateItem: (input: { productId: string; variantId?: string | null; quantity: number }) => Promise<{ items: CartItem[]; totalPrice: number }>;
+    removeItem: (input: { productId: string; variantId?: string | null }) => Promise<{ items: CartItem[]; totalPrice: number }>;
   };
   order: {
     createOrder: (input: {
       shippingAddress: Address;
       billingAddress: Address;
-      items: { productId: string; quantity: number }[];
+      items: { productId: string; variantId?: string | null; quantity: number }[];
       couponCode?: string;
     }) => Promise<{
       orderId: string;

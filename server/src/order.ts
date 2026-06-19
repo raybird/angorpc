@@ -30,13 +30,22 @@ export const createOrder = os
     // 使用交易以保證扣庫存、建訂單與清購物車的原子性
     const result = await prisma.$transaction(async (tx) => {
       const productIds = input.items.map((i) => i.productId);
+      const variantIds = input.items.map((i) => i.variantId).filter(Boolean) as string[];
 
-      // 1. 查詢所有相關商品資訊
-      const products = await tx.product.findMany({
-        where: { id: { in: productIds } },
-      });
+      // 1. 查詢所有相關商品與變體資訊
+      const [products, variants] = await Promise.all([
+        tx.product.findMany({
+          where: { id: { in: productIds } },
+        }),
+        variantIds.length > 0
+          ? tx.productVariant.findMany({
+              where: { id: { in: variantIds } },
+            })
+          : [],
+      ]);
 
       const productMap = new Map(products.map((p) => [p.id, p]));
+      const variantMap = new Map(variants.map((v) => [v.id, v]));
 
       // 2. 預檢商品狀態與庫存
       let totalAmount = 0;
@@ -45,10 +54,22 @@ export const createOrder = os
         if (!product || !product.isActive) {
           throw new Error('PRODUCT_NOT_FOUND');
         }
-        if (product.stock < item.quantity) {
-          throw new Error('INSUFFICIENT_STOCK');
+
+        if (item.variantId) {
+          const variant = variantMap.get(item.variantId);
+          if (!variant || variant.productId !== item.productId) {
+            throw new Error('PRODUCT_NOT_FOUND'); // 變體不存在或不屬於此商品
+          }
+          if (variant.stock < item.quantity) {
+            throw new Error('INSUFFICIENT_STOCK');
+          }
+          totalAmount += Number(variant.price) * item.quantity;
+        } else {
+          if (product.stock < item.quantity) {
+            throw new Error('INSUFFICIENT_STOCK');
+          }
+          totalAmount += Number(product.price) * item.quantity;
         }
-        totalAmount += Number(product.price) * item.quantity;
       }
 
       // 2.1 驗證並計算優惠券折扣
@@ -89,16 +110,28 @@ export const createOrder = os
       // 3. 扣減庫存 (使用 gte 條件保障併發安全與樂觀鎖版本自增)
       for (const item of input.items) {
         try {
-          await tx.product.update({
-            where: {
-              id: item.productId,
-              stock: { gte: item.quantity },
-            },
-            data: {
-              stock: { decrement: item.quantity },
-              version: { increment: 1 }, // 自增版本以利樂觀鎖防護
-            },
-          });
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: {
+                id: item.variantId,
+                stock: { gte: item.quantity },
+              },
+              data: {
+                stock: { decrement: item.quantity },
+              },
+            });
+          } else {
+            await tx.product.update({
+              where: {
+                id: item.productId,
+                stock: { gte: item.quantity },
+              },
+              data: {
+                stock: { decrement: item.quantity },
+                version: { increment: 1 }, // 自增版本以利樂觀鎖防護
+              },
+            });
+          }
         } catch (err) {
           // 若更新失敗代表在此瞬間庫存已被他人取走
           throw new Error('INSUFFICIENT_STOCK');
@@ -118,11 +151,21 @@ export const createOrder = os
           orderItems: {
             create: input.items.map((item) => {
               const product = productMap.get(item.productId)!;
-              return {
-                productId: item.productId,
-                price: product.price,
-                quantity: item.quantity,
-              };
+              if (item.variantId) {
+                const variant = variantMap.get(item.variantId)!;
+                return {
+                  productId: item.productId,
+                  variantId: item.variantId,
+                  price: variant.price,
+                  quantity: item.quantity,
+                };
+              } else {
+                return {
+                  productId: item.productId,
+                  price: product.price,
+                  quantity: item.quantity,
+                };
+              }
             }),
           },
         },
@@ -214,6 +257,7 @@ export const getOrderById = os
         orderItems: {
           include: {
             product: true,
+            variant: true,
           },
         },
         coupon: true,
@@ -236,7 +280,9 @@ export const getOrderById = os
     const formattedItems = order.orderItems.map((item) => ({
       id: item.id,
       productId: item.productId,
+      variantId: item.variantId,
       name: item.product.name,
+      variantName: item.variant?.name || null,
       price: Number(item.price), // 當下快照價格
       quantity: item.quantity,
     }));
@@ -284,6 +330,7 @@ export const updateOrderStatus = os
         orderItems: {
           include: {
             product: true,
+            variant: true,
           },
         },
         coupon: true,
@@ -296,7 +343,9 @@ export const updateOrderStatus = os
     const formattedItems = order.orderItems.map((item) => ({
       id: item.id,
       productId: item.productId,
+      variantId: item.variantId,
       name: item.product.name,
+      variantName: item.variant?.name || null,
       price: Number(item.price),
       quantity: item.quantity,
     }));

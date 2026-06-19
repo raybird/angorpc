@@ -98,6 +98,19 @@ export const UpdateAddressInputSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
+// 商品變體 Schema 結構
+export const ProductVariantSchema = z.object({
+  id: z.string().uuid(),
+  productId: z.string().uuid(),
+  sku: z.string().nullable().optional(),
+  name: z.string(),
+  price: z.number(),
+  stock: z.number(),
+  attributes: z.record(z.string(), z.any()),
+  createdAt: z.date().or(z.string()),
+  updatedAt: z.date().or(z.string()),
+});
+
 // 商品主要 Schema 結構
 export const ProductSchema = z.object({
   id: z.string().uuid(),
@@ -149,6 +162,7 @@ export const ProductDetailOutputSchema = z.object({
     name: z.string(),
     slug: z.string(),
   }),
+  variants: z.array(ProductVariantSchema),
   createdAt: z.date().or(z.string()),
   updatedAt: z.date().or(z.string()),
 });
@@ -162,6 +176,13 @@ export const CreateProductInputSchema = z.object({
   categoryId: z.string().uuid("不合法的分類 ID 格式"),
   stock: z.number().int().nonnegative("庫存量不能為負數").default(0),
   isActive: z.boolean().default(true),
+  variants: z.array(z.object({
+    sku: z.string().nullable().optional(),
+    name: z.string(),
+    price: z.number(),
+    stock: z.number(),
+    attributes: z.record(z.string(), z.any()),
+  })).optional(),
 });
 
 // 更新商品輸入 Schema
@@ -174,6 +195,14 @@ export const UpdateProductInputSchema = z.object({
   categoryId: z.string().uuid().optional(),
   stock: z.number().int().nonnegative().optional(),
   isActive: z.boolean().optional(),
+  variants: z.array(z.object({
+    id: z.string().uuid().optional(),
+    sku: z.string().nullable().optional(),
+    name: z.string(),
+    price: z.number(),
+    stock: z.number(),
+    attributes: z.record(z.string(), z.any()),
+  })).optional(),
 });
 
 // 購物車項目詳細 Schema
@@ -181,27 +210,32 @@ export const CartItemSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
   productId: z.string().uuid(),
+  variantId: z.string().uuid().nullable().optional(),
   quantity: z.number().int().positive(),
   createdAt: z.date().or(z.string()),
   updatedAt: z.date().or(z.string()),
   product: ProductSchema,
+  variant: ProductVariantSchema.nullable().optional(),
 });
 
 // 新增商品至購物車輸入 Schema
 export const AddCartItemInputSchema = z.object({
   productId: z.string().uuid("不合法的商品 ID 格式"),
+  variantId: z.string().uuid("不合法的變體 ID 格式").optional().nullable(),
   quantity: z.number().int().positive("商品數量必須大於 0").default(1),
 });
 
 // 更新購物車商品數量輸入 Schema
 export const UpdateCartItemInputSchema = z.object({
   productId: z.string().uuid("不合法的商品 ID 格式"),
+  variantId: z.string().uuid("不合法的變體 ID 格式").optional().nullable(),
   quantity: z.number().int().positive("商品數量必須大於 0"),
 });
 
 // 移除購物車商品輸入 Schema
 export const RemoveCartItemInputSchema = z.object({
   productId: z.string().uuid("不合法的商品 ID 格式"),
+  variantId: z.string().uuid("不合法的變體 ID 格式").optional().nullable(),
 });
 
 // 查詢購物車輸出 Schema
@@ -224,6 +258,7 @@ export const CreateOrderInputSchema = z.object({
   billingAddress: AddressSchema,
   items: z.array(z.object({
     productId: z.string().uuid(),
+    variantId: z.string().uuid().optional().nullable(),
     quantity: z.number().int().positive()
   })).min(1, "購物車至少需包含一項商品"),
   couponCode: z.string().optional(),
@@ -360,7 +395,9 @@ export const OrderDetailOutputSchema = z.object({
   orderItems: z.array(z.object({
     id: z.string().uuid(),
     productId: z.string().uuid(),
+    variantId: z.string().uuid().optional().nullable(),
     name: z.string(),
+    variantName: z.string().optional().nullable(),
     price: z.number(),
     quantity: z.number(),
   })),

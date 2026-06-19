@@ -17,16 +17,18 @@ export class CartComponent {
 
   protected readonly isUpdating = signal<string | null>(null);
 
-  async onUpdateQuantity(productId: string, currentQty: number, change: number) {
+  async onUpdateQuantity(productId: string, currentQty: number, change: number, variantId?: string | null, itemId?: string) {
     const newQty = currentQty + change;
     if (newQty <= 0) {
-      await this.onRemoveItem(productId);
+      await this.onRemoveItem(productId, variantId, itemId);
       return;
     }
 
-    this.isUpdating.set(productId);
+    if (itemId) {
+      this.isUpdating.set(itemId);
+    }
     try {
-      await this.cartState.updateQuantity(productId, newQty);
+      await this.cartState.updateQuantity(productId, newQty, variantId);
     } catch (err) {
       alert('更新商品數量失敗，可能已超出庫存上限！');
     } finally {
@@ -34,11 +36,13 @@ export class CartComponent {
     }
   }
 
-  async onRemoveItem(productId: string) {
+  async onRemoveItem(productId: string, variantId?: string | null, itemId?: string) {
     if (confirm('確定要將此商品從購物車中移除嗎？')) {
-      this.isUpdating.set(productId);
+      if (itemId) {
+        this.isUpdating.set(itemId);
+      }
       try {
-        await this.cartState.removeItem(productId);
+        await this.cartState.removeItem(productId, variantId);
       } catch (err) {
         alert('移除商品失敗！');
       } finally {

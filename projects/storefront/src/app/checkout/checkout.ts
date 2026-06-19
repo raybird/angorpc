@@ -187,6 +187,7 @@ export class CheckoutComponent implements OnInit {
       const formVal = this.checkoutForm.value;
       const items = this.cartState.cartItems().map(item => ({
         productId: item.productId,
+        variantId: item.variantId || null,
         quantity: item.quantity
       }));
 

@@ -228,6 +228,79 @@
             ></textarea>
           </div>
 
+          <!-- 規格變體管理區塊 -->
+          <div class="variants-management-section">
+            <h4 class="section-title">🎨 商品規格變體管理</h4>
+            
+            <!-- 已有的變體列表 -->
+            @if (tempVariants().length > 0) {
+              <div class="variants-list-box">
+                <table class="variants-table">
+                  <thead>
+                    <tr>
+                      <th>變體名稱</th>
+                      <th>SKU</th>
+                      <th>價格</th>
+                      <th>庫存</th>
+                      <th>屬性 JSON</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (v of tempVariants(); track $index) {
+                      <tr>
+                        <td>{{ v.name }}</td>
+                        <td>{{ v.sku || '-' }}</td>
+                        <td>${{ v.price }}</td>
+                        <td>{{ v.stock }}</td>
+                        <td class="json-cell">{{ v.attributes | json }}</td>
+                        <td>
+                          <button type="button" class="btn-delete-variant" (click)="onRemoveTempVariant($index)">
+                            ✕
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <div class="no-variants-tip">
+                💡 目前無任何規格變體，商品將以單一規格銷售（使用上方商品定價與庫存）。
+              </div>
+            }
+
+            <!-- 新增變體表單 -->
+            <div class="add-variant-box" [formGroup]="variantForm">
+              <h5>新增變體規格</h5>
+              <div class="variant-form-grid">
+                <div class="form-group-sub">
+                  <label>變體名稱</label>
+                  <input type="text" formControlName="name" placeholder="如: 藍色 / L" />
+                </div>
+                <div class="form-group-sub">
+                  <label>SKU</label>
+                  <input type="text" formControlName="sku" placeholder="如: KB-BLU-L" />
+                </div>
+                <div class="form-group-sub">
+                  <label>售價</label>
+                  <input type="number" formControlName="price" placeholder="價格" />
+                </div>
+                <div class="form-group-sub">
+                  <label>庫存</label>
+                  <input type="number" formControlName="stock" placeholder="數量" />
+                </div>
+                <div class="form-group-sub full-row">
+                  <label>屬性 JSON</label>
+                  <input type="text" formControlName="attributesStr" placeholder='如: {"Color": "藍色", "Size": "L"}' />
+                </div>
+              </div>
+              <button type="button" class="btn-add-variant" (click)="onAddTempVariant()">
+                ➕ 新增此規格變體
+              </button>
+            </div>
+          </div>
+
           <footer class="modal-footer">
             <button type="button" class="btn-cancel" (click)="closeModal()" [disabled]="isSaving()">
               取消

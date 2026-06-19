@@ -27,6 +27,9 @@ export class ProductsComponent implements OnInit {
   protected readonly editingProduct = signal<any | null>(null);
   protected readonly errorMessage = signal('');
 
+  // 暫存的商品變體清單
+  protected readonly tempVariants = signal<any[]>([]);
+
   protected readonly productForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9-]+$/)]],
@@ -35,6 +38,15 @@ export class ProductsComponent implements OnInit {
     categoryId: ['', [Validators.required]],
     isActive: [true],
     description: ['']
+  });
+
+  // 變體新增表單
+  protected readonly variantForm = this.fb.group({
+    name: ['', [Validators.required]],
+    sku: [''],
+    price: [0, [Validators.required, Validators.min(0.01)]],
+    stock: [0, [Validators.required, Validators.min(0)]],
+    attributesStr: ['{}', [Validators.required]]
   });
 
   ngOnInit() {
@@ -123,6 +135,7 @@ export class ProductsComponent implements OnInit {
   openCreateModal() {
     this.editingProduct.set(null);
     this.errorMessage.set('');
+    this.tempVariants.set([]); // 清空變體暫存
     this.productForm.reset({
       name: '',
       slug: '',
@@ -138,21 +151,73 @@ export class ProductsComponent implements OnInit {
   openEditModal(product: any) {
     this.editingProduct.set(product);
     this.errorMessage.set('');
-    this.productForm.setValue({
-      name: product.name,
-      slug: product.slug,
-      price: product.price,
-      stock: product.stock,
-      categoryId: product.categoryId,
-      isActive: product.isActive,
-      description: product.description || ''
-    });
-    this.isModalOpen.set(true);
+    
+    // 透過 oRPC 查詢完整的商品詳情以獲得 variants 資訊
+    this.loadProductDetailForEdit(product);
+  }
+
+  private async loadProductDetailForEdit(product: any) {
+    try {
+      const detail = await this.orpc.client.product.getProductById({ id: product.id });
+      this.tempVariants.set(detail.variants ? JSON.parse(JSON.stringify(detail.variants)) : []);
+      this.productForm.setValue({
+        name: detail.name,
+        slug: detail.slug,
+        price: detail.price,
+        stock: detail.stock,
+        categoryId: detail.categoryId,
+        isActive: detail.isActive,
+        description: detail.description || ''
+      });
+      this.isModalOpen.set(true);
+    } catch (err) {
+      console.error('Failed to fetch full product detail for editing:', err);
+      alert('讀取商品完整資訊失敗，請重試！');
+    }
   }
 
   closeModal() {
     this.isModalOpen.set(false);
     this.editingProduct.set(null);
+  }
+
+  protected onAddTempVariant() {
+    if (this.variantForm.invalid) {
+      this.variantForm.markAllAsTouched();
+      return;
+    }
+    const val = this.variantForm.value;
+    let attrs = {};
+    try {
+      attrs = JSON.parse(val.attributesStr || '{}');
+    } catch(e) {
+      alert('屬性 JSON 格式不正確，請重新檢查！例如: {"Color": "藍色"}');
+      return;
+    }
+
+    this.tempVariants.update(list => [
+      ...list,
+      {
+        name: val.name!,
+        sku: val.sku || null,
+        price: Number(val.price),
+        stock: Number(val.stock),
+        attributes: attrs
+      }
+    ]);
+
+    // 重置變體表單
+    this.variantForm.reset({
+      name: '',
+      sku: '',
+      price: 0,
+      stock: 0,
+      attributesStr: '{}'
+    });
+  }
+
+  protected onRemoveTempVariant(index: number) {
+    this.tempVariants.update(list => list.filter((_, i) => i !== index));
   }
 
   async onSaveProduct() {
@@ -173,7 +238,15 @@ export class ProductsComponent implements OnInit {
         stock: Number(formValue.stock),
         categoryId: formValue.categoryId!,
         isActive: formValue.isActive!,
-        description: formValue.description || undefined
+        description: formValue.description || undefined,
+        variants: this.tempVariants().map(v => ({
+          id: v.id || undefined, // 新增的沒有 id
+          sku: v.sku,
+          name: v.name,
+          price: v.price,
+          stock: v.stock,
+          attributes: v.attributes
+        }))
       };
 
       if (this.editingProduct()) {
